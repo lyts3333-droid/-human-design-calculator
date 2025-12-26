@@ -2001,8 +2001,8 @@
             messageArea.innerHTML = '';
 
             try {
-                // 發送 POST 請求到後端（Netlify Function）
-                const response = await fetch('/.netlify/functions/calculate_hd', {
+                // 發送 POST 請求到後端（Flask API）
+                const response = await fetch('/calculate_hd', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

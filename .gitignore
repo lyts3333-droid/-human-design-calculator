@@ -25,8 +25,8 @@ Thumbs.db
 # Logs
 *.log
 
-# Flask 伺服器文件（Netlify 不使用）
-app.py
+# Flask 伺服器文件（保留 app.py 用於 Render 部署）
+# app.py  # 不再忽略，需要部署到 Render
 app_enhanced.py
 start_server.bat
 start_server.sh
@@ -59,6 +59,8 @@ human_design_visualizer.html
 human_design_calculator.py
 human_design_simplified.py
 
-# Flask 依賴（Netlify Function 有自己的 requirements.txt）
-requirements.txt
+# Flask 依賴（保留根目錄的 requirements.txt 用於 Render 部署）
+# requirements.txt  # 不再忽略，需要部署到 Render
+# Netlify Function 有自己的 requirements.txt（如果還需要的話）
+!netlify/functions/**/requirements.txt
 
