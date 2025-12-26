@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+
+# Netlify
+.netlify/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Flask 伺服器文件（Netlify 不使用）
+app.py
+app_enhanced.py
+start_server.bat
+start_server.sh
+run_test.bat
+快速啟動.bat
+啟動伺服器.bat
+運行人類圖計算器.bat
+
+# 本地開發用的測試文件
+test_*.py
+quick_test.py
+example_*.py
+human_design_example.py
+human_design_visualizer.html
+
+# 大型數據文件（可選，如果不需要可以排除）
+# ephe/
+
+# 文檔文件（可選，如果想保留可以註釋掉）
+# *.md
+# 使用指南.md
+# 測試指南.md
+# 正確啟動方式.md
+# 如何正確訪問.md
+# 修正說明.md
+# 診斷連接問題.md
+# 完整測試步驟.md
+
+# 人類圖計算器源文件（Netlify Function 不需要，因為已經整合到 __init__.py）
+human_design_calculator.py
+human_design_simplified.py
+
+# Flask 依賴（Netlify Function 有自己的 requirements.txt）
+requirements.txt
+

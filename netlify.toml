@@ -1,0 +1,19 @@
+# Netlify 配置文件
+
+[build]
+  command = "cp -f index_netlify.html index.html && echo 'index.html updated for Netlify' || echo 'Warning: Could not copy index_netlify.html'"
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  # Python 版本將由 Netlify 自動檢測，或可以在 function 目錄中創建 runtime.txt 指定
+
+# 處理單頁應用的路由重定向
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 確保 Function 請求不被重定向（移除無效規則）
+# Functions 會自動處理，不需要手動重定向
+

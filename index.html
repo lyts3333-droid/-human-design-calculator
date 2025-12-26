@@ -1,0 +1,2131 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人類圖計算器 - Web 應用</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .input-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-item label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-item input,
+        .form-item select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            background: white;
+        }
+
+        .form-item input:focus,
+        .form-item select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            display: grid;
+            grid-template-columns: 1fr 1.6fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .results-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .section {
+            background: 
+                linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%),
+                radial-gradient(circle at 20% 50%, rgba(100, 200, 255, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(100, 255, 200, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 20%, rgba(255, 200, 100, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(255, 100, 200, 0.06) 0%, transparent 50%);
+            background-size: 
+                100% 100%,
+                300px 300px,
+                300px 300px,
+                300px 300px,
+                300px 300px;
+            background-position: 
+                0% 0%,
+                0% 0%,
+                100% 100%,
+                50% 0%,
+                50% 100%;
+            background-repeat: no-repeat;
+            border-radius: 15px;
+            padding: 25px;
+            position: relative;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.6em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        /* Body Graph 容器樣式 - 使用 Grid 佈局（僅左右兩欄） */
+        #body-graph-container {
+            width: 100%;
+            height: auto;
+            min-height: 600px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            background: 
+                linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%),
+                radial-gradient(circle at 20% 50%, rgba(100, 200, 255, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(100, 255, 200, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 20%, rgba(255, 200, 100, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(255, 100, 200, 0.06) 0%, transparent 50%);
+            background-size: 
+                100% 100%,
+                300px 300px,
+                300px 300px,
+                300px 300px,
+                300px 300px;
+            background-position: 
+                0% 0%,
+                0% 0%,
+                100% 100%,
+                50% 0%,
+                50% 100%;
+            background-repeat: no-repeat;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            #body-graph-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+        }
+
+        /* 側邊欄樣式 */
+        .planet-sidebar {
+            display: flex;
+            flex-direction: column;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .sidebar-design {
+            background: #ffe6e6;  /* 淺紅底色 */
+            border: 2px solid #ff9999;
+        }
+
+        .sidebar-personality {
+            background: #f0f0f0;  /* 淺灰底色 */
+            border: 2px solid #cccccc;
+        }
+
+        .sidebar-title {
+            font-size: 1.6em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 18px;
+            padding: 13px;
+            border-radius: 8px;
+            color: #333;
+        }
+
+        .sidebar-design .sidebar-title {
+            background: rgba(255, 200, 200, 0.5);
+            color: #8b0000;
+        }
+
+        .sidebar-personality .sidebar-title {
+            background: rgba(200, 200, 200, 0.5);
+            color: #333;
+        }
+
+        /* 行星列表項 */
+        .planet-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+            font-size: 1.25em;
+        }
+
+        .planet-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .planet-icon {
+            width: 42px;
+            height: 42px;
+            margin-right: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.6em;
+            border-radius: 50%;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .sidebar-design .planet-icon {
+            background: #ffcccc;
+            color: #8b0000;
+        }
+
+        .sidebar-personality .planet-icon {
+            background: #d0d0d0;
+            color: #333;
+        }
+
+        .planet-name {
+            flex: 0 0 90px;
+            font-weight: 500;
+            font-size: 1.2em;
+        }
+
+        .planet-gate-line {
+            flex: 0 0 115px;
+            text-align: center;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            gap: 3px;
+        }
+
+        .gate-number {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .sidebar-design .gate-number {
+            color: #8b0000;  /* 深紅色 */
+        }
+
+        .gate-separator {
+            font-size: 1.5em;
+            color: #999;
+        }
+
+        .line-number {
+            font-size: 1em;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        /* 星座符號樣式 */
+        .zodiac-symbol {
+            font-size: 1.4em;
+            margin-right: 5px;
+            color: #667eea;
+            font-weight: bold;
+        }
+        
+        /* 升陷箭頭樣式 */
+        .arrow-ascending {
+            color: #28a745;  /* 綠色 */
+            font-size: 1.3em;
+            margin-left: 5px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        
+        .arrow-descending {
+            color: #dc3545;  /* 紅色 */
+            font-size: 1.3em;
+            margin-left: 5px;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .planet-sign {
+            flex: 1;
+            text-align: right;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        #body-graph {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+        }
+
+        /* 能量中心樣式 */
+        .energy-center {
+            stroke: #333;
+            stroke-width: 2;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .energy-center.defined {
+            fill: #4a90e2;
+            stroke: #2c5aa0;
+            stroke-width: 3;
+        }
+
+        .energy-center.undefined {
+            fill: #e8e8e8;
+            stroke: #999;
+            stroke-width: 2;
+        }
+
+        .energy-center:hover {
+            filter: brightness(1.1);
+        }
+
+        /* 通道樣式 */
+        .channel {
+            stroke: #ccc;
+            stroke-width: 2;
+            fill: none;
+            transition: all 0.3s ease;
+        }
+
+        .channel.defined {
+            stroke: #4a90e2;
+            stroke-width: 4;
+        }
+
+        .channel.undefined {
+            stroke: #e0e0e0;
+            stroke-width: 2;
+            stroke-dasharray: 5,5;
+        }
+
+        /* 中心標籤 */
+        .center-label {
+            font-size: 12px;
+            font-weight: bold;
+            fill: #333;
+            pointer-events: none;
+            text-anchor: middle;
+        }
+
+        .center-label.defined {
+            fill: white;
+        }
+
+        /* 結果表格樣式 */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .results-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+
+        .results-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .results-table tr:hover {
+            background: #f0f0f0;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-defined {
+            background: #4a90e2;
+            color: white;
+        }
+
+        .status-undefined {
+            background: #e8e8e8;
+            color: #666;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: white;
+            margin: 5px 0;
+        }
+
+        .type-generator {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .type-manifestor {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .type-projector {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .type-reflector {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .info-box {
+            background: white;
+            border-left: 4px solid #667eea;
+            padding: 18px;
+            margin: 18px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-box.highlight-box {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+        }
+
+        .info-box.warning-box {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        }
+
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 12px;
+            font-size: 1.6em;
+            font-weight: 600;
+        }
+
+        .info-box.highlight-box h3 {
+            color: #f59e0b;
+        }
+
+        .info-box.warning-box h3 {
+            color: #ef4444;
+        }
+
+        .info-box p {
+            color: #666;
+            line-height: 1.8;
+            font-size: 1.4em;
+            margin: 0;
+        }
+
+        .profile-badge {
+            display: inline-block;
+            font-size: 3em;
+            font-weight: bold;
+            color: #f59e0b;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            border: 2px solid #f59e0b;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+        }
+
+        .strategy-text, .authority-text, .definition-text {
+            font-weight: 500;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .theme-text {
+            font-weight: 600;
+            color: #ef4444;
+            font-size: 1.5em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #dc3545;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .hidden-field {
+            display: none !important;
+        }
+        
+        
+        /* 圓形人類圖表樣式 */
+        
+        /* 基因天命 (Gene Keys) 樣式 - 5x5 網格系統 */
+        #gene-keys-section {
+            margin-top: 40px;
+        }
+        
+        #gene-keys-container {
+            position: relative;
+            width: 100%;
+            min-height: 1200px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 40px;
+            overflow: visible;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* 生命之花背景圖案 */
+        #gene-keys-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(100, 200, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 50%, rgba(100, 255, 200, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 50% 20%, rgba(255, 200, 100, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(255, 100, 200, 0.03) 0%, transparent 50%);
+            background-size: 300px 300px, 300px 300px, 300px 300px, 300px 300px;
+            background-position: 0% 0%, 100% 100%, 50% 0%, 50% 100%;
+            background-repeat: no-repeat;
+            opacity: 0.4;
+            z-index: 0;
+        }
+        
+        .gene-keys-wrapper {
+            position: relative;
+            width: 900px;
+            height: 900px;
+            margin: -20px auto 0 -30px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 100px;
+            z-index: 10;
+            align-items: center;
+            justify-items: center;
+            padding: 60px;
+        }
+        
+        .gene-keys-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* 確保 SVG 連線在球體下方 */
+        .gene-keys-svg {
+            z-index: 0;
+        }
+        
+        .gene-keys-wrapper {
+            z-index: 10;
+        }
+        
+        .gene-keys-svg path {
+            fill: none;
+        }
+        
+        .gene-key-sphere {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            grid-template-rows: 1fr 2fr 1fr;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+            padding: 5px;
+            box-sizing: border-box;
+        }
+        
+        .gene-key-sphere:hover {
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* 對於沒有自定義 transform 的球體，hover 時應用 scale */
+        .gene-key-sphere:not([data-transform]):hover {
+            transform: scale(1.15);
+        }
+        
+        /* 對於有自定義 transform 的球體，hover 時在原有 transform 基礎上加上 scale */
+        .gene-key-sphere[data-transform]:hover {
+            transform: var(--original-transform);
+        }
+        
+        .gene-key-sphere.blue {
+            /* 珍珠序列 - 寶藍色系 */
+            background: radial-gradient(circle at 30% 30%, #3498db, #21618c);
+            color: white;
+        }
+        
+        .gene-key-sphere.green {
+            /* 啟動序列 - 綠色放射狀漸層 */
+            background: radial-gradient(circle at 30% 30%, #76a07b, #2d4d32);
+            color: white;
+        }
+        
+        .gene-key-sphere.orange {
+            /* 金星序列 - 深紅/酒紅色系 */
+            background: radial-gradient(circle at 30% 30%, #c0392b, #7b241c);
+            color: white;
+        }
+        
+        .gene-key-gate {
+            font-size: 2em;
+            font-weight: 900;
+            line-height: 1;
+            text-align: center;
+            position: relative;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .gene-key-line {
+            position: absolute;
+            bottom: 8px;
+            right: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+            color: #cccccc;
+            opacity: 0.8;
+        }
+        
+        .gene-key-label {
+            font-size: 0.75em;
+            text-align: center;
+            margin-top: 5px;
+            font-weight: 600;
+            line-height: 1.2;
+            color: #ffffff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .gene-key-desc {
+            font-size: 0.65em;
+            text-align: center;
+            margin-top: 2px;
+            opacity: 0.85;
+            font-style: italic;
+            color: #e0e0e0;
+        }
+        
+        /* 基因天命球體使用與圓形圖表相同的文字格式 */
+        .gene-key-sphere .planet-marker-name {
+            grid-column: 1 / 4;
+            grid-row: 1;
+            font-size: 0.7em;
+            text-align: center;
+            font-weight: 600;
+            align-self: center;
+        }
+        
+        .gene-key-sphere .planet-marker-house {
+            grid-column: 1;
+            grid-row: 2;
+            font-size: 0.7em;
+            text-align: center;
+            align-self: center;
+            justify-self: center;
+        }
+        
+        .gene-key-sphere .planet-marker-gate {
+            grid-column: 2;
+            grid-row: 2;
+            font-size: 2.5em;
+            font-weight: 900;
+            text-align: center;
+            align-self: center;
+            justify-self: center;
+        }
+        
+        .gene-key-sphere .planet-marker-line {
+            grid-column: 3;
+            grid-row: 2;
+            font-size: 0.7em;
+            text-align: center;
+            align-self: center;
+            justify-self: center;
+        }
+        
+        .gene-key-sphere .planet-marker-zodiac {
+            grid-column: 1 / 4;
+            grid-row: 3;
+            font-size: 0.65em;
+            text-align: center;
+            align-self: center;
+        }
+        
+        /* 確保文字顏色正確（使用白色文字） */
+        .gene-key-sphere .planet-marker-name,
+        .gene-key-sphere .planet-marker-gate,
+        .gene-key-sphere .planet-marker-line,
+        .gene-key-sphere .planet-marker-zodiac {
+            color: #ffffff;
+        }
+        
+        .gene-key-sphere.green .planet-marker-name,
+        .gene-key-sphere.green .planet-marker-gate,
+        .gene-key-sphere.green .planet-marker-line,
+        .gene-key-sphere.green .planet-marker-zodiac {
+            color: #ffffff;
+        }
+        
+        .gene-key-sphere.blue .planet-marker-name,
+        .gene-key-sphere.blue .planet-marker-gate,
+        .gene-key-sphere.blue .planet-marker-line,
+        .gene-key-sphere.blue .planet-marker-zodiac {
+            color: #ffffff;
+        }
+        
+        .gene-key-sphere.orange .planet-marker-name,
+        .gene-key-sphere.orange .planet-marker-gate,
+        .gene-key-sphere.orange .planet-marker-line,
+        .gene-key-sphere.orange .planet-marker-zodiac {
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌟 人類圖計算器</h1>
+            <p>Human Design Calculator - Web Application</p>
+        </div>
+
+        <div class="content">
+            <!-- 輸入表單區域 -->
+            <div class="input-section">
+                <h2>輸入出生資料</h2>
+                <form id="birth-form">
+                    <div class="form-group">
+                        <div class="form-item">
+                            <label for="year">年份 (Year)</label>
+                            <input type="number" id="year" name="year" min="1900" max="2100" 
+                                   value="2002" required placeholder="例如：2002">
+                        </div>
+                        <div class="form-item">
+                            <label for="month">月份 (Month)</label>
+                            <input type="number" id="month" name="month" min="1" max="12" 
+                                   value="9" required placeholder="例如：9">
+                        </div>
+                        <div class="form-item">
+                            <label for="day">日期 (Day)</label>
+                            <input type="number" id="day" name="day" min="1" max="31" 
+                                   value="21" required placeholder="例如：21">
+                        </div>
+                        <div class="form-item">
+                            <label for="time">時間 (Time)</label>
+                            <input type="time" id="time" name="time" 
+                                   value="01:31" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-item">
+                            <label for="county">縣市 (County)</label>
+                            <select id="county" name="county" required>
+                                <option value="">請選擇縣市</option>
+                            </select>
+                        </div>
+                        <div class="form-item">
+                            <label for="district">區域/鄉鎮 (District)</label>
+                            <select id="district" name="district" required>
+                                <option value="">請先選擇縣市</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- 隱藏欄位：使用 data 屬性存儲，不參與表單驗證 -->
+                    <input type="hidden" id="timezone" value="Asia/Shanghai">
+                    <input type="hidden" id="longitude" value="121.5">
+                    <input type="hidden" id="latitude" value="25.0">
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary" id="calculate-btn">
+                            計算人類圖
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="reset-btn">
+                            重置
+                        </button>
+                    </div>
+                </form>
+                <div id="message-area"></div>
+            </div>
+
+            <!-- 結果顯示區域 -->
+            <div id="results-container" class="hidden">
+                <div class="results-section">
+                    <!-- 行星列表顯示區域 -->
+                    <div class="section">
+                        <h2>行星閘門與爻線</h2>
+                        <div id="body-graph-container">
+                            <!-- 左側欄：Design（潛意識/紅色） -->
+                            <div class="planet-sidebar sidebar-design" id="design-sidebar">
+                                <div class="sidebar-title">潛意識 (Design)</div>
+                                <div id="design-planet-list">
+                                    <div class="loading" style="text-align: center; padding: 20px; color: #666;">
+                                        等待數據...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 右側欄：Personality（意識/灰色） -->
+                            <div class="planet-sidebar sidebar-personality" id="personality-sidebar">
+                                <div class="sidebar-title">意識 (Personality)</div>
+                                <div id="personality-planet-list">
+                                    <div class="loading" style="text-align: center; padding: 20px; color: #666;">
+                                        等待數據...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右側：分析結果 -->
+                    <div class="section">
+                        <h2>分析結果</h2>
+                        <div id="text-results-container">
+                            <div class="loading">等待計算結果...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 基因天命 (Gene Keys) 黃金之路區塊 -->
+                <div class="section" id="gene-keys-section" style="display: none; margin-top: 30px;">
+                    <h2>基因天命 (Gene Keys) - 黃金之路</h2>
+                    <div id="gene-keys-container">
+                        <div class="loading">等待計算結果...</div>
+                    </div>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 台灣縣市和區域數據（包含經緯度）
+        const taiwanLocations = {
+            "臺北市": {
+                "中正區": { longitude: 121.5194, latitude: 25.0324 },
+                "大同區": { longitude: 121.5138, latitude: 25.0626 },
+                "中山區": { longitude: 121.5277, latitude: 25.0642 },
+                "松山區": { longitude: 121.5769, latitude: 25.0575 },
+                "大安區": { longitude: 121.5439, latitude: 25.0259 },
+                "萬華區": { longitude: 121.5004, latitude: 25.0315 },
+                "信義區": { longitude: 121.5717, latitude: 25.0330 },
+                "士林區": { longitude: 121.5267, latitude: 25.0924 },
+                "北投區": { longitude: 121.4988, latitude: 25.1327 },
+                "內湖區": { longitude: 121.5889, latitude: 25.0696 },
+                "南港區": { longitude: 121.6075, latitude: 25.0543 },
+                "文山區": { longitude: 121.5700, latitude: 24.9891 }
+            },
+            "新北市": {
+                "板橋區": { longitude: 121.4591, latitude: 25.0081 },
+                "三重區": { longitude: 121.4849, latitude: 25.0621 },
+                "中和區": { longitude: 121.4924, latitude: 24.9965 },
+                "永和區": { longitude: 121.5136, latitude: 25.0118 },
+                "新莊區": { longitude: 121.4426, latitude: 25.0335 },
+                "新店區": { longitude: 121.5377, latitude: 24.9564 },
+                "樹林區": { longitude: 121.4244, latitude: 24.9910 },
+                "鶯歌區": { longitude: 121.3545, latitude: 24.9551 },
+                "三峽區": { longitude: 121.3690, latitude: 24.9341 },
+                "淡水區": { longitude: 121.4434, latitude: 25.1674 },
+                "汐止區": { longitude: 121.6560, latitude: 25.0677 },
+                "瑞芳區": { longitude: 121.8056, latitude: 25.1092 },
+                "土城區": { longitude: 121.4449, latitude: 24.9733 },
+                "蘆洲區": { longitude: 121.4737, latitude: 25.0831 },
+                "五股區": { longitude: 121.4367, latitude: 25.0834 },
+                "泰山區": { longitude: 121.4286, latitude: 25.0576 },
+                "林口區": { longitude: 121.3897, latitude: 25.0779 },
+                "深坑區": { longitude: 121.6152, latitude: 25.0019 },
+                "石碇區": { longitude: 121.6608, latitude: 24.9915 },
+                "坪林區": { longitude: 121.7121, latitude: 24.9371 },
+                "三芝區": { longitude: 121.5012, latitude: 25.2584 },
+                "石門區": { longitude: 121.5681, latitude: 25.2912 },
+                "八里區": { longitude: 121.3990, latitude: 25.1469 },
+                "平溪區": { longitude: 121.7806, latitude: 25.0256 },
+                "雙溪區": { longitude: 121.8657, latitude: 25.0385 },
+                "貢寮區": { longitude: 121.9225, latitude: 25.0215 },
+                "金山區": { longitude: 121.6384, latitude: 25.2211 },
+                "萬里區": { longitude: 121.6895, latitude: 25.1793 },
+                "烏來區": { longitude: 121.5510, latitude: 24.8632 }
+            },
+            "桃園市": {
+                "桃園區": { longitude: 121.3010, latitude: 24.9936 },
+                "中壢區": { longitude: 121.2249, latitude: 24.9544 },
+                "大溪區": { longitude: 121.2868, latitude: 24.8844 },
+                "楊梅區": { longitude: 121.1462, latitude: 24.9087 },
+                "蘆竹區": { longitude: 121.2933, latitude: 25.0479 },
+                "大園區": { longitude: 121.1995, latitude: 25.0649 },
+                "龜山區": { longitude: 121.3397, latitude: 25.0179 },
+                "八德區": { longitude: 121.2840, latitude: 24.9267 },
+                "龍潭區": { longitude: 121.2124, latitude: 24.8633 },
+                "平鎮區": { longitude: 121.2180, latitude: 24.9453 },
+                "新屋區": { longitude: 121.0618, latitude: 24.9696 },
+                "觀音區": { longitude: 121.0794, latitude: 25.0317 },
+                "復興區": { longitude: 121.3526, latitude: 24.8182 }
+            },
+            "臺中市": {
+                "中區": { longitude: 120.6790, latitude: 24.1418 },
+                "東區": { longitude: 120.6972, latitude: 24.1388 },
+                "南區": { longitude: 120.6614, latitude: 24.1261 },
+                "西區": { longitude: 120.6634, latitude: 24.1446 },
+                "北區": { longitude: 120.6792, latitude: 24.1582 },
+                "西屯區": { longitude: 120.6384, latitude: 24.1788 },
+                "南屯區": { longitude: 120.6432, latitude: 24.1346 },
+                "北屯區": { longitude: 120.6976, latitude: 24.1834 },
+                "豐原區": { longitude: 120.7207, latitude: 24.2518 },
+                "東勢區": { longitude: 120.8274, latitude: 24.2587 },
+                "大甲區": { longitude: 120.6224, latitude: 24.3457 },
+                "清水區": { longitude: 120.5693, latitude: 24.2686 },
+                "沙鹿區": { longitude: 120.5657, latitude: 24.2337 },
+                "梧棲區": { longitude: 120.5306, latitude: 24.2548 },
+                "后里區": { longitude: 120.7299, latitude: 24.3095 },
+                "神岡區": { longitude: 120.6614, latitude: 24.2568 },
+                "潭子區": { longitude: 120.7050, latitude: 24.2118 },
+                "大雅區": { longitude: 120.6500, latitude: 24.2272 },
+                "新社區": { longitude: 120.8098, latitude: 24.2344 },
+                "石岡區": { longitude: 120.7779, latitude: 24.2746 },
+                "外埔區": { longitude: 120.6538, latitude: 24.3319 },
+                "大安區": { longitude: 120.5866, latitude: 24.3456 },
+                "烏日區": { longitude: 120.6234, latitude: 24.1048 },
+                "大肚區": { longitude: 120.5444, latitude: 24.1477 },
+                "龍井區": { longitude: 120.5454, latitude: 24.1883 },
+                "霧峰區": { longitude: 120.6986, latitude: 24.0615 },
+                "太平區": { longitude: 120.7185, latitude: 24.1262 },
+                "大里區": { longitude: 120.6794, latitude: 24.0989 },
+                "和平區": { longitude: 121.0210, latitude: 24.3103 }
+            },
+            "臺南市": {
+                "中西區": { longitude: 120.1960, latitude: 22.9924 },
+                "東區": { longitude: 120.2280, latitude: 22.9812 },
+                "南區": { longitude: 120.1883, latitude: 22.9473 },
+                "北區": { longitude: 120.2089, latitude: 23.0103 },
+                "安平區": { longitude: 120.1628, latitude: 22.9872 },
+                "安南區": { longitude: 120.1587, latitude: 23.0460 },
+                "永康區": { longitude: 120.2579, latitude: 23.0268 },
+                "歸仁區": { longitude: 120.2938, latitude: 22.9691 },
+                "新化區": { longitude: 120.3097, latitude: 23.0372 },
+                "左鎮區": { longitude: 120.4084, latitude: 23.0571 },
+                "玉井區": { longitude: 120.4614, latitude: 23.1233 },
+                "楠西區": { longitude: 120.4844, latitude: 23.1838 },
+                "南化區": { longitude: 120.4770, latitude: 23.0422 },
+                "仁德區": { longitude: 120.2513, latitude: 22.9696 },
+                "關廟區": { longitude: 120.3268, latitude: 22.9622 },
+                "龍崎區": { longitude: 120.3605, latitude: 22.9584 },
+                "官田區": { longitude: 120.3164, latitude: 23.1936 },
+                "麻豆區": { longitude: 120.2474, latitude: 23.1814 },
+                "佳里區": { longitude: 120.1732, latitude: 23.1673 },
+                "西港區": { longitude: 120.2032, latitude: 23.1229 },
+                "七股區": { longitude: 120.1088, latitude: 23.1342 },
+                "將軍區": { longitude: 120.1272, latitude: 23.2044 },
+                "學甲區": { longitude: 120.1802, latitude: 23.2324 },
+                "北門區": { longitude: 120.1251, latitude: 23.2672 },
+                "新營區": { longitude: 120.3159, latitude: 23.3078 },
+                "後壁區": { longitude: 120.3636, latitude: 23.3651 },
+                "白河區": { longitude: 120.4165, latitude: 23.3506 },
+                "東山區": { longitude: 120.4084, latitude: 23.3264 },
+                "六甲區": { longitude: 120.3714, latitude: 23.2306 },
+                "下營區": { longitude: 120.2644, latitude: 23.2331 },
+                "柳營區": { longitude: 120.3103, latitude: 23.2781 },
+                "鹽水區": { longitude: 120.2663, latitude: 23.3201 },
+                "善化區": { longitude: 120.2963, latitude: 23.1314 },
+                "大內區": { longitude: 120.4134, latitude: 23.1194 },
+                "山上區": { longitude: 120.3552, latitude: 23.1033 },
+                "新市區": { longitude: 120.2952, latitude: 23.0789 },
+                "安定區": { longitude: 120.2362, latitude: 23.1214 }
+            },
+            "高雄市": {
+                "新興區": { longitude: 120.3094, latitude: 22.6308 },
+                "前金區": { longitude: 120.2924, latitude: 22.6278 },
+                "苓雅區": { longitude: 120.3204, latitude: 22.6208 },
+                "鹽埕區": { longitude: 120.2844, latitude: 22.6258 },
+                "鼓山區": { longitude: 120.2754, latitude: 22.6308 },
+                "旗津區": { longitude: 120.2844, latitude: 22.6108 },
+                "前鎮區": { longitude: 120.3174, latitude: 22.5988 },
+                "三民區": { longitude: 120.3184, latitude: 22.6458 },
+                "左營區": { longitude: 120.2944, latitude: 22.6878 },
+                "楠梓區": { longitude: 120.3264, latitude: 22.7308 },
+                "小港區": { longitude: 120.3574, latitude: 22.5658 },
+                "鳳山區": { longitude: 120.3564, latitude: 22.6278 },
+                "林園區": { longitude: 120.3934, latitude: 22.5088 },
+                "大寮區": { longitude: 120.3934, latitude: 22.6058 },
+                "大樹區": { longitude: 120.4324, latitude: 22.6978 },
+                "大社區": { longitude: 120.3644, latitude: 22.7278 },
+                "仁武區": { longitude: 120.3474, latitude: 22.7018 },
+                "鳥松區": { longitude: 120.3744, latitude: 22.6608 },
+                "岡山區": { longitude: 120.2944, latitude: 22.7978 },
+                "橋頭區": { longitude: 120.3094, latitude: 22.7578 },
+                "燕巢區": { longitude: 120.3614, latitude: 22.7938 },
+                "田寮區": { longitude: 120.3934, latitude: 22.8678 },
+                "阿蓮區": { longitude: 120.3274, latitude: 22.8778 },
+                "路竹區": { longitude: 120.2634, latitude: 22.8538 },
+                "湖內區": { longitude: 120.2294, latitude: 22.9078 },
+                "茄萣區": { longitude: 120.1824, latitude: 22.9078 },
+                "永安區": { longitude: 120.2244, latitude: 22.8178 },
+                "彌陀區": { longitude: 120.2454, latitude: 22.7838 },
+                "梓官區": { longitude: 120.2654, latitude: 22.7578 },
+                "旗山區": { longitude: 120.4814, latitude: 22.8888 },
+                "美濃區": { longitude: 120.5474, latitude: 22.8938 },
+                "六龜區": { longitude: 120.6334, latitude: 22.9978 },
+                "甲仙區": { longitude: 120.5914, latitude: 23.0778 },
+                "杉林區": { longitude: 120.5354, latitude: 22.9578 },
+                "內門區": { longitude: 120.4714, latitude: 22.9438 },
+                "茂林區": { longitude: 120.6634, latitude: 22.8878 },
+                "桃源區": { longitude: 120.7584, latitude: 23.1878 },
+                "那瑪夏區": { longitude: 120.6924, latitude: 23.2278 }
+            },
+            "基隆市": {
+                "仁愛區": { longitude: 121.7444, latitude: 25.1278 },
+                "信義區": { longitude: 121.7654, latitude: 25.1298 },
+                "中正區": { longitude: 121.7754, latitude: 25.1388 },
+                "中山區": { longitude: 121.7394, latitude: 25.1488 },
+                "安樂區": { longitude: 121.7244, latitude: 25.1478 },
+                "暖暖區": { longitude: 121.7394, latitude: 25.0988 },
+                "七堵區": { longitude: 121.6814, latitude: 25.0978 }
+            },
+            "新竹市": {
+                "東區": { longitude: 120.9754, latitude: 24.8088 },
+                "北區": { longitude: 120.9564, latitude: 24.8188 },
+                "香山區": { longitude: 120.9244, latitude: 24.7588 }
+            },
+            "新竹縣": {
+                "竹北市": { longitude: 120.9954, latitude: 24.8288 },
+                "湖口鄉": { longitude: 121.0444, latitude: 24.8978 },
+                "新豐鄉": { longitude: 120.9844, latitude: 24.8978 },
+                "新埔鎮": { longitude: 121.0744, latitude: 24.8378 },
+                "關西鎮": { longitude: 121.1744, latitude: 24.7978 },
+                "芎林鄉": { longitude: 121.0744, latitude: 24.7778 },
+                "寶山鄉": { longitude: 120.9844, latitude: 24.7578 },
+                "竹東鎮": { longitude: 121.0944, latitude: 24.7278 },
+                "五峰鄉": { longitude: 121.1344, latitude: 24.6278 },
+                "橫山鄉": { longitude: 121.1544, latitude: 24.7278 },
+                "尖石鄉": { longitude: 121.3044, latitude: 24.7078 },
+                "北埔鄉": { longitude: 121.0544, latitude: 24.6978 },
+                "峨眉鄉": { longitude: 121.0044, latitude: 24.6778 }
+            },
+            "苗栗縣": {
+                "苗栗市": { longitude: 120.8194, latitude: 24.5678 },
+                "苑裡鎮": { longitude: 120.6544, latitude: 24.4478 },
+                "通霄鎮": { longitude: 120.6764, latitude: 24.4978 },
+                "竹南鎮": { longitude: 120.8744, latitude: 24.6878 },
+                "頭份市": { longitude: 120.8944, latitude: 24.6878 },
+                "後龍鎮": { longitude: 120.7864, latitude: 24.6178 },
+                "卓蘭鎮": { longitude: 120.8244, latitude: 24.3078 },
+                "大湖鄉": { longitude: 120.8544, latitude: 24.4278 },
+                "公館鄉": { longitude: 120.8244, latitude: 24.4978 },
+                "銅鑼鄉": { longitude: 120.7844, latitude: 24.4878 },
+                "南庄鄉": { longitude: 121.0044, latitude: 24.5978 },
+                "頭屋鄉": { longitude: 120.8444, latitude: 24.5778 },
+                "三義鄉": { longitude: 120.7644, latitude: 24.4078 },
+                "西湖鄉": { longitude: 120.7544, latitude: 24.5578 },
+                "造橋鄉": { longitude: 120.8644, latitude: 24.6378 },
+                "三灣鄉": { longitude: 120.9544, latitude: 24.6478 },
+                "獅潭鄉": { longitude: 120.9244, latitude: 24.5378 },
+                "泰安鄉": { longitude: 121.0844, latitude: 24.4378 }
+            },
+            "彰化縣": {
+                "彰化市": { longitude: 120.5394, latitude: 24.0778 },
+                "鹿港鎮": { longitude: 120.4344, latitude: 24.0578 },
+                "和美鎮": { longitude: 120.5044, latitude: 24.1078 },
+                "線西鄉": { longitude: 120.4644, latitude: 24.1278 },
+                "伸港鄉": { longitude: 120.4844, latitude: 24.1578 },
+                "福興鄉": { longitude: 120.4444, latitude: 24.0478 },
+                "秀水鄉": { longitude: 120.5044, latitude: 24.0378 },
+                "花壇鄉": { longitude: 120.5444, latitude: 24.0278 },
+                "芬園鄉": { longitude: 120.6244, latitude: 24.0178 },
+                "員林市": { longitude: 120.5744, latitude: 23.9578 },
+                "溪湖鎮": { longitude: 120.4744, latitude: 23.9578 },
+                "田中鎮": { longitude: 120.5944, latitude: 23.8578 },
+                "大村鄉": { longitude: 120.5444, latitude: 23.9878 },
+                "埔鹽鄉": { longitude: 120.4644, latitude: 23.9978 },
+                "埔心鄉": { longitude: 120.5344, latitude: 23.9578 },
+                "永靖鄉": { longitude: 120.5444, latitude: 23.9278 },
+                "社頭鄉": { longitude: 120.5844, latitude: 23.8978 },
+                "二水鄉": { longitude: 120.6144, latitude: 23.8078 },
+                "北斗鎮": { longitude: 120.5244, latitude: 23.8778 },
+                "二林鎮": { longitude: 120.3744, latitude: 23.8978 },
+                "田尾鄉": { longitude: 120.5244, latitude: 23.8878 },
+                "埤頭鄉": { longitude: 120.4644, latitude: 23.8878 },
+                "芳苑鄉": { longitude: 120.3244, latitude: 23.9278 },
+                "大城鄉": { longitude: 120.3144, latitude: 23.8578 },
+                "竹塘鄉": { longitude: 120.4244, latitude: 23.8578 },
+                "溪州鄉": { longitude: 120.4944, latitude: 23.8378 }
+            },
+            "南投縣": {
+                "南投市": { longitude: 120.6844, latitude: 23.9078 },
+                "埔里鎮": { longitude: 120.9644, latitude: 23.9678 },
+                "草屯鎮": { longitude: 120.6844, latitude: 23.9778 },
+                "竹山鎮": { longitude: 120.6844, latitude: 23.7578 },
+                "集集鎮": { longitude: 120.7844, latitude: 23.8278 },
+                "名間鄉": { longitude: 120.7044, latitude: 23.8378 },
+                "鹿谷鄉": { longitude: 120.7644, latitude: 23.7478 },
+                "中寮鄉": { longitude: 120.7644, latitude: 23.8778 },
+                "魚池鄉": { longitude: 120.9244, latitude: 23.8978 },
+                "國姓鄉": { longitude: 120.8444, latitude: 24.0278 },
+                "水里鄉": { longitude: 120.8544, latitude: 23.8078 },
+                "信義鄉": { longitude: 120.8544, latitude: 23.6978 },
+                "仁愛鄉": { longitude: 121.1344, latitude: 24.0278 }
+            },
+            "雲林縣": {
+                "斗六市": { longitude: 120.5444, latitude: 23.7078 },
+                "斗南鎮": { longitude: 120.4844, latitude: 23.6778 },
+                "虎尾鎮": { longitude: 120.4344, latitude: 23.7078 },
+                "西螺鎮": { longitude: 120.4644, latitude: 23.7978 },
+                "土庫鎮": { longitude: 120.3844, latitude: 23.6778 },
+                "北港鎮": { longitude: 120.3044, latitude: 23.5778 },
+                "古坑鄉": { longitude: 120.5644, latitude: 23.6478 },
+                "大埤鄉": { longitude: 120.4344, latitude: 23.6478 },
+                "莿桐鄉": { longitude: 120.5044, latitude: 23.7578 },
+                "林內鄉": { longitude: 120.6144, latitude: 23.7578 },
+                "二崙鄉": { longitude: 120.4144, latitude: 23.7878 },
+                "崙背鄉": { longitude: 120.3544, latitude: 23.7578 },
+                "麥寮鄉": { longitude: 120.2644, latitude: 23.7478 },
+                "東勢鄉": { longitude: 120.2544, latitude: 23.6778 },
+                "褒忠鄉": { longitude: 120.3144, latitude: 23.6978 },
+                "臺西鄉": { longitude: 120.2044, latitude: 23.7078 },
+                "元長鄉": { longitude: 120.3144, latitude: 23.6478 },
+                "四湖鄉": { longitude: 120.2244, latitude: 23.6378 },
+                "口湖鄉": { longitude: 120.1844, latitude: 23.5878 },
+                "水林鄉": { longitude: 120.2444, latitude: 23.5678 }
+            },
+            "嘉義市": {
+                "東區": { longitude: 120.4544, latitude: 23.4878 },
+                "西區": { longitude: 120.4344, latitude: 23.4778 }
+            },
+            "嘉義縣": {
+                "太保市": { longitude: 120.3444, latitude: 23.4678 },
+                "朴子市": { longitude: 120.2444, latitude: 23.4678 },
+                "布袋鎮": { longitude: 120.1544, latitude: 23.3878 },
+                "大林鎮": { longitude: 120.4544, latitude: 23.6078 },
+                "民雄鄉": { longitude: 120.4344, latitude: 23.5578 },
+                "溪口鄉": { longitude: 120.3944, latitude: 23.6078 },
+                "新港鄉": { longitude: 120.3444, latitude: 23.5578 },
+                "六腳鄉": { longitude: 120.2744, latitude: 23.5078 },
+                "東石鄉": { longitude: 120.1544, latitude: 23.4578 },
+                "義竹鄉": { longitude: 120.2444, latitude: 23.3378 },
+                "鹿草鄉": { longitude: 120.3044, latitude: 23.4078 },
+                "水上鄉": { longitude: 120.3944, latitude: 23.4278 },
+                "中埔鄉": { longitude: 120.5244, latitude: 23.4278 },
+                "竹崎鄉": { longitude: 120.5544, latitude: 23.5078 },
+                "梅山鄉": { longitude: 120.5644, latitude: 23.5778 },
+                "番路鄉": { longitude: 120.5644, latitude: 23.4778 },
+                "大埔鄉": { longitude: 120.5944, latitude: 23.2978 },
+                "阿里山鄉": { longitude: 120.7444, latitude: 23.5078 }
+            },
+            "屏東縣": {
+                "屏東市": { longitude: 120.4944, latitude: 22.6778 },
+                "潮州鎮": { longitude: 120.5444, latitude: 22.5478 },
+                "東港鎮": { longitude: 120.4544, latitude: 22.4678 },
+                "恆春鎮": { longitude: 120.7444, latitude: 22.0078 },
+                "萬丹鄉": { longitude: 120.4844, latitude: 22.5878 },
+                "長治鄉": { longitude: 120.5244, latitude: 22.6878 },
+                "麟洛鄉": { longitude: 120.5244, latitude: 22.6478 },
+                "九如鄉": { longitude: 120.4944, latitude: 22.7278 },
+                "里港鄉": { longitude: 120.4944, latitude: 22.7778 },
+                "鹽埔鄉": { longitude: 120.5644, latitude: 22.7578 },
+                "高樹鄉": { longitude: 120.5944, latitude: 22.8278 },
+                "萬巒鄉": { longitude: 120.5644, latitude: 22.5778 },
+                "內埔鄉": { longitude: 120.5644, latitude: 22.6178 },
+                "竹田鄉": { longitude: 120.5244, latitude: 22.5778 },
+                "新埤鄉": { longitude: 120.5444, latitude: 22.4778 },
+                "枋寮鄉": { longitude: 120.5944, latitude: 22.3778 },
+                "新園鄉": { longitude: 120.4544, latitude: 22.5378 },
+                "崁頂鄉": { longitude: 120.5144, latitude: 22.5078 },
+                "林邊鄉": { longitude: 120.5144, latitude: 22.4378 },
+                "南州鄉": { longitude: 120.5144, latitude: 22.4878 },
+                "佳冬鄉": { longitude: 120.5444, latitude: 22.4178 },
+                "琉球鄉": { longitude: 120.3744, latitude: 22.3478 },
+                "車城鄉": { longitude: 120.7144, latitude: 22.0678 },
+                "滿州鄉": { longitude: 120.8144, latitude: 22.0278 },
+                "枋山鄉": { longitude: 120.6544, latitude: 22.2578 },
+                "三地門鄉": { longitude: 120.6544, latitude: 22.7178 },
+                "霧台鄉": { longitude: 120.7344, latitude: 22.7478 },
+                "瑪家鄉": { longitude: 120.6544, latitude: 22.6478 },
+                "泰武鄉": { longitude: 120.6344, latitude: 22.5878 },
+                "來義鄉": { longitude: 120.6744, latitude: 22.5278 },
+                "春日鄉": { longitude: 120.6244, latitude: 22.3778 },
+                "獅子鄉": { longitude: 120.7044, latitude: 22.2078 },
+                "牡丹鄉": { longitude: 120.7944, latitude: 22.1278 }
+            },
+            "宜蘭縣": {
+                "宜蘭市": { longitude: 121.7544, latitude: 24.7578 },
+                "羅東鎮": { longitude: 121.7744, latitude: 24.6778 },
+                "蘇澳鎮": { longitude: 121.8544, latitude: 24.5978 },
+                "頭城鎮": { longitude: 121.8244, latitude: 24.8578 },
+                "礁溪鄉": { longitude: 121.7744, latitude: 24.8278 },
+                "壯圍鄉": { longitude: 121.8044, latitude: 24.7578 },
+                "員山鄉": { longitude: 121.7344, latitude: 24.7478 },
+                "冬山鄉": { longitude: 121.7944, latitude: 24.6378 },
+                "五結鄉": { longitude: 121.8044, latitude: 24.6878 },
+                "三星鄉": { longitude: 121.6644, latitude: 24.6678 },
+                "大同鄉": { longitude: 121.6044, latitude: 24.5778 },
+                "南澳鄉": { longitude: 121.7944, latitude: 24.4578 }
+            },
+            "花蓮縣": {
+                "花蓮市": { longitude: 121.6044, latitude: 23.9778 },
+                "鳳林鎮": { longitude: 121.4544, latitude: 23.7478 },
+                "玉里鎮": { longitude: 121.3144, latitude: 23.3378 },
+                "新城鄉": { longitude: 121.6544, latitude: 24.0278 },
+                "吉安鄉": { longitude: 121.5744, latitude: 23.9578 },
+                "壽豐鄉": { longitude: 121.5144, latitude: 23.8678 },
+                "光復鄉": { longitude: 121.4244, latitude: 23.6578 },
+                "豐濱鄉": { longitude: 121.5144, latitude: 23.5978 },
+                "瑞穗鄉": { longitude: 121.3744, latitude: 23.4978 },
+                "富里鄉": { longitude: 121.2544, latitude: 23.1778 },
+                "秀林鄉": { longitude: 121.6044, latitude: 24.1278 },
+                "萬榮鄉": { longitude: 121.4044, latitude: 23.7078 },
+                "卓溪鄉": { longitude: 121.3044, latitude: 23.3478 }
+            },
+            "臺東縣": {
+                "臺東市": { longitude: 121.1444, latitude: 22.7578 },
+                "成功鎮": { longitude: 121.3744, latitude: 23.1078 },
+                "關山鎮": { longitude: 121.1644, latitude: 23.0478 },
+                "卑南鄉": { longitude: 121.0844, latitude: 22.7878 },
+                "鹿野鄉": { longitude: 121.1344, latitude: 22.9178 },
+                "池上鄉": { longitude: 121.2144, latitude: 23.1278 },
+                "東河鄉": { longitude: 121.3044, latitude: 22.9678 },
+                "長濱鄉": { longitude: 121.4544, latitude: 23.3278 },
+                "太麻里鄉": { longitude: 121.0044, latitude: 22.6078 },
+                "大武鄉": { longitude: 120.8944, latitude: 22.3578 },
+                "綠島鄉": { longitude: 121.4744, latitude: 22.6578 },
+                "海端鄉": { longitude: 121.1744, latitude: 23.1978 },
+                "延平鄉": { longitude: 121.0744, latitude: 22.8978 },
+                "金峰鄉": { longitude: 120.8944, latitude: 22.5978 },
+                "達仁鄉": { longitude: 120.8844, latitude: 22.2978 },
+                "蘭嶼鄉": { longitude: 121.5544, latitude: 22.0578 }
+            },
+            "澎湖縣": {
+                "馬公市": { longitude: 119.5644, latitude: 23.5678 },
+                "湖西鄉": { longitude: 119.6544, latitude: 23.5778 },
+                "白沙鄉": { longitude: 119.5844, latitude: 23.6578 },
+                "西嶼鄉": { longitude: 119.5044, latitude: 23.5978 },
+                "望安鄉": { longitude: 119.5044, latitude: 23.3578 },
+                "七美鄉": { longitude: 119.4244, latitude: 23.2078 }
+            },
+            "金門縣": {
+                "金城鎮": { longitude: 118.3244, latitude: 24.4378 },
+                "金湖鎮": { longitude: 118.4044, latitude: 24.4478 },
+                "金沙鎮": { longitude: 118.4044, latitude: 24.4978 },
+                "金寧鄉": { longitude: 118.3244, latitude: 24.4578 },
+                "烈嶼鄉": { longitude: 118.2344, latitude: 24.4278 },
+                "烏坵鄉": { longitude: 119.4544, latitude: 24.9878 }
+            },
+            "連江縣": {
+                "南竿鄉": { longitude: 119.9444, latitude: 26.1478 },
+                "北竿鄉": { longitude: 119.9844, latitude: 26.2278 },
+                "莒光鄉": { longitude: 119.9344, latitude: 25.9678 },
+                "東引鄉": { longitude: 120.4944, latitude: 26.3678 }
+            }
+        };
+
+        // 初始化縣市選單
+        function initializeCountySelect() {
+            const countySelect = document.getElementById('county');
+            const districtSelect = document.getElementById('district');
+            
+            if (!countySelect || !districtSelect) {
+                console.error('找不到縣市或區域選單元素');
+                return;
+            }
+            
+            // 清空選單
+            countySelect.innerHTML = '<option value="">請選擇縣市</option>';
+            districtSelect.innerHTML = '<option value="">請先選擇縣市</option>';
+            
+            // 填充縣市選單
+            let countyCount = 0;
+            for (const county in taiwanLocations) {
+                const option = document.createElement('option');
+                option.value = county;
+                option.textContent = county;
+                countySelect.appendChild(option);
+                countyCount++;
+            }
+            
+            console.log('縣市選單已初始化，共 ' + countyCount + ' 個縣市');
+            console.log('taiwanLocations 數據:', Object.keys(taiwanLocations));
+        }
+
+        // 當選擇縣市時，更新區域選單
+        function updateDistrictSelect(county) {
+            const districtSelect = document.getElementById('district');
+            districtSelect.innerHTML = '<option value="">請選擇區域/鄉鎮</option>';
+            
+            if (county && taiwanLocations[county]) {
+                for (const district in taiwanLocations[county]) {
+                    const option = document.createElement('option');
+                    option.value = district;
+                    option.textContent = district;
+                    districtSelect.appendChild(option);
+                }
+            }
+        }
+
+        // 當選擇區域時，更新經緯度
+        function updateCoordinates(county, district) {
+            const longitudeInput = document.getElementById('longitude');
+            const latitudeInput = document.getElementById('latitude');
+            
+            if (!longitudeInput || !latitudeInput) {
+                console.error('找不到經緯度輸入欄位');
+                return;
+            }
+            
+            if (county && district && taiwanLocations[county] && taiwanLocations[county][district]) {
+                const location = taiwanLocations[county][district];
+                longitudeInput.value = location.longitude.toFixed(4);
+                latitudeInput.value = location.latitude.toFixed(4);
+                
+                console.log('已更新經緯度:', {
+                    county: county,
+                    district: district,
+                    longitude: longitudeInput.value,
+                    latitude: latitudeInput.value
+                });
+            } else {
+                console.warn('無法更新經緯度:', { county, district, 
+                    hasCounty: !!county, 
+                    hasDistrict: !!district,
+                    hasLocationData: !!(county && taiwanLocations[county]),
+                    hasDistrictData: !!(county && district && taiwanLocations[county] && taiwanLocations[county][district])
+                });
+            }
+        }
+
+        // 中心名稱映射
+        const centerNameMap = {
+            "Head": "head",
+            "Ajna": "ajna",
+            "Throat": "throat",
+            "G": "g",
+            "Ego": "ego",
+            "Spleen": "spleen",
+            "Sacral": "sacral",
+            "Solar_Plexus": "solar-plexus",
+            "Root": "root"
+        };
+
+        // 通道 ID 映射函數
+        function getChannelId(gate1, gate2) {
+            return `channel-${gate1}-${gate2}`;
+        }
+
+        // 渲染人類圖的主要函式
+        function renderHumanDesign(data) {
+            if (!data) {
+                console.error("無效的數據格式");
+                return;
+            }
+
+            // 1. 渲染文字結果
+            renderTextResults(data);
+
+            // 2. 渲染行星列表（如果數據包含）
+            // 注意：參數順序為 (personalityList, designList)
+            // design_list 顯示在左側，personality_list 顯示在右側
+            if (data.design_list && data.personality_list) {
+                renderPlanetLists(data.personality_list, data.design_list);
+            } else {
+                // 如果沒有數據，顯示提示信息
+                const designContainer = document.getElementById('design-planet-list');
+                const personalityContainer = document.getElementById('personality-planet-list');
+                if (designContainer) {
+                    designContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">數據未提供</div>';
+                }
+                if (personalityContainer) {
+                    personalityContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">數據未提供</div>';
+                }
+            }
+            
+            // 3. 渲染基因天命 (Gene Keys)
+            if (data.design_list && data.personality_list) {
+                renderGeneKeys(data.personality_list, data.design_list);
+            }
+            
+        }
+        // 渲染基因天命 (Gene Keys) 黃金之路 - 重構版本
+        function renderGeneKeys(personalityList, designList) {
+            const container = document.getElementById('gene-keys-container');
+            const section = document.getElementById('gene-keys-section');
+            
+            if (!container || !section) {
+                console.error('找不到基因天命容器');
+                return;
+            }
+            
+            // 從行星列表中提取關鍵數據
+            function findPlanet(list, planetName) {
+                return list.find(p => p.planet === planetName);
+            }
+            
+            // 獲取關鍵行星數據
+            const personalitySun = findPlanet(personalityList, 'Sun');
+            const personalityEarth = findPlanet(personalityList, 'Earth');
+            const designSun = findPlanet(designList, 'Sun');
+            const designEarth = findPlanet(designList, 'Earth');
+            const personalityMoon = findPlanet(personalityList, 'Moon');
+            const designMoon = findPlanet(designList, 'Moon');
+            const personalityVenus = findPlanet(personalityList, 'Venus');
+            const designVenus = findPlanet(designList, 'Venus');
+            const personalityMars = findPlanet(personalityList, 'Mars');
+            const designMars = findPlanet(designList, 'Mars');
+            const personalityJupiter = findPlanet(personalityList, 'Jupiter');
+            const designJupiter = findPlanet(designList, 'Jupiter');
+            
+            // 基因天命節點定義（5x5 網格系統）
+            // 格式: { id, label, value, color, gridRow, gridCol, description }
+            const geneKeyNodes = [
+                // 垂直中軸 (第 3 欄)
+                { id: 'personality-sun', label: '黑太陽', value: personalitySun?.gate_line || 'N/A', 
+                  color: 'green', gridRow: 1, gridCol: 3, description: 'Life\'s Work', planet: 'Sun', type: 'personality' },
+                { id: 'personality-jupiter', label: '黑木星', value: personalityJupiter?.gate_line || 'N/A', 
+                  color: 'blue', gridRow: 2, gridCol: 3, description: 'Pearl', planet: 'Jupiter', type: 'personality' },
+                { id: 'design-venus', label: '紅金星', value: designVenus?.gate_line || 'N/A', 
+                  color: 'orange', gridRow: 3, gridCol: 3, description: 'SQ', planet: 'Venus', type: 'design' },
+                { id: 'design-moon', label: '紅月亮', value: designMoon?.gate_line || 'N/A', 
+                  color: 'orange', gridRow: 4, gridCol: 3, description: 'Attraction', planet: 'Moon', type: 'design' },
+                { id: 'design-earth', label: '紅地球', value: designEarth?.gate_line || 'N/A', 
+                  color: 'green', gridRow: 5, gridCol: 3, description: 'Purpose', planet: 'Earth', type: 'design' },
+                
+                // 中層兩側 (第 2, 4 欄)
+                { id: 'design-mars', label: '紅火星', value: designMars?.gate_line || 'N/A', 
+                  color: 'blue', gridRow: 2, gridCol: 2, description: 'Core', planet: 'Mars', type: 'design', transform: 'translate(20px, 60px)' },
+                { id: 'design-jupiter', label: '紅木星', value: designJupiter?.gate_line || 'N/A', 
+                  color: 'blue', gridRow: 2, gridCol: 4, description: 'Culture', planet: 'Jupiter', type: 'design', transform: 'translate(-20px, 60px)' },
+                { id: 'design-sun', label: '紅太陽', value: designSun?.gate_line || 'N/A', 
+                  color: 'green', gridRow: 3, gridCol: 1, description: 'Radiance', planet: 'Sun', type: 'design' },
+                { id: 'personality-earth', label: '黑地球', value: personalityEarth?.gate_line || 'N/A', 
+                  color: 'green', gridRow: 3, gridCol: 5, description: 'Evolution', planet: 'Earth', type: 'personality' },
+                { id: 'personality-venus', label: '黑金星', value: personalityVenus?.gate_line || 'N/A', 
+                  color: 'orange', gridRow: 4, gridCol: 2, description: 'IQ', planet: 'Venus', type: 'personality', transform: 'translate(0, -70px)' },
+                { id: 'personality-mars', label: '黑火星', value: personalityMars?.gate_line || 'N/A', 
+                  color: 'orange', gridRow: 4, gridCol: 4, description: 'EQ', planet: 'Mars', type: 'personality', transform: 'translate(0, -70px)' },
+            ];
+            
+            // 構建連接線數據（根據指定的三條序列路徑）
+            const connections = [
+                // 1. 啟動序列 (Activation Sequence) - 綠色連線
+                { from: 'design-sun', to: 'design-earth', color: 'green' },        // 紅太陽 → 紅地球
+                { from: 'personality-sun', to: 'personality-earth', color: 'green' }, // 黑太陽 → 黑地球
+                { from: 'personality-earth', to: 'design-sun', color: 'green' },   // 黑地球 → 紅太陽
+                { from: 'design-sun', to: 'personality-earth', color: 'green' },   // 紅太陽 → 黑地球
+                { from: 'personality-earth', to: 'design-earth', color: 'green' }, // 黑地球 → 紅地球
+                { from: 'design-earth', to: 'personality-earth', color: 'green' }, // 紅地球 → 黑地球
+                
+                // 2. 金星序列 (Venus Sequence) - 紅色連線
+                { from: 'personality-venus', to: 'personality-mars', color: 'red' }, // 黑金星 → 黑火星
+                { from: 'personality-venus', to: 'design-moon', color: 'red' },      // 黑金星 → 紅月亮
+                { from: 'design-moon', to: 'design-earth', color: 'red' },          // 紅月亮 → 紅地球
+                { from: 'design-earth', to: 'design-moon', color: 'red' },          // 紅地球 → 紅月亮
+                { from: 'design-venus', to: 'personality-mars', color: 'red' },    // 紅金星 → 黑火星
+                
+                // 3. 珍珠序列 (Pearl Sequence) - 藍色連線
+                { from: 'design-venus', to: 'design-jupiter', color: 'blue' },     // 紅金星 → 紅木星
+                { from: 'design-jupiter', to: 'personality-jupiter', color: 'blue' }, // 紅木星 → 黑木星
+                { from: 'personality-jupiter', to: 'design-mars', color: 'blue' }, // 黑木星 → 紅火星
+                { from: 'design-mars', to: 'design-venus', color: 'blue' },        // 紅火星 → 紅金星
+                { from: 'design-mars', to: 'design-jupiter', color: 'blue' },      // 紅火星 → 紅木星
+                { from: 'personality-sun', to: 'design-mars', color: 'blue' },     // 黑太陽 → 紅火星
+                { from: 'personality-sun', to: 'design-jupiter', color: 'blue' },  // 黑太陽 → 紅木星
+                { from: 'personality-jupiter', to: 'personality-sun', color: 'blue' }, // 黑木星 → 黑太陽
+            ];
+            
+            // 創建容器（使用 5x5 網格）
+            const wrapper = document.createElement('div');
+            wrapper.className = 'gene-keys-wrapper';
+            
+            // 創建 SVG 層（最底層）
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'gene-keys-svg');
+            svg.setAttribute('width', '900');
+            svg.setAttribute('height', '900');
+            svg.setAttribute('viewBox', '0 0 900 900');
+            
+            // 計算每個網格單元的中心點（考慮 gap 和 padding）
+            // 總尺寸: 900px, padding: 60px (兩邊), gap: 100px (4個)
+            // 單元格寬度 = (900 - 2*60 - 4*100) / 5 = 76px
+            const getCenterPoint = (gridRow, gridCol) => {
+                const padding = 60;
+                const gap = 100;
+                const cellSize = (900 - 2 * padding - 4 * gap) / 5; // 76px
+                
+                // 計算中心點：padding + (col-1)*(cell+gap) + cell/2
+                const x = padding + (gridCol - 1) * (cellSize + gap) + cellSize / 2;
+                const y = padding + (gridRow - 1) * (cellSize + gap) + cellSize / 2;
+                
+                return { x, y };
+            };
+            
+            // 創建節點並記錄位置
+            const nodePositions = {};
+            
+            geneKeyNodes.forEach(node => {
+                // 創建節點元素
+                const nodeEl = document.createElement('div');
+                nodeEl.className = `gene-key-sphere ${node.color}`;
+                nodeEl.id = `gene-key-${node.id}`;
+                
+                // 設置網格位置
+                nodeEl.style.gridRow = node.gridRow;
+                nodeEl.style.gridColumn = node.gridCol;
+                
+                // 如果有 transform 屬性，應用它
+                if (node.transform) {
+                    nodeEl.setAttribute('data-transform', node.transform);
+                    nodeEl.style.transform = node.transform;
+                    // 為了 hover 效果，使用 CSS 變量保存原始 transform
+                    nodeEl.style.setProperty('--original-transform', node.transform + ' scale(1.15)');
+                }
+                
+                // 解析閘門和爻線
+                const gateLine = node.value.toString();
+                const parts = gateLine.split('.');
+                const gate = parts[0] || '';
+                const line = parts[1] || '';
+                
+                // 獲取星座符號（從原始行星數據）
+                let zodiac = '';
+                const planetData = findPlanet(node.type === 'personality' ? personalityList : designList, node.planet);
+                if (planetData && planetData.constellation_symbol) {
+                    zodiac = planetData.constellation_symbol;
+                }
+                
+                // 使用與圓形圖表相同的格式顯示
+                nodeEl.innerHTML = `
+                    <div class="planet-marker-name">${node.label}</div>
+                    <div class="planet-marker-house"></div>
+                    <div class="planet-marker-gate">${gate}</div>
+                    <div class="planet-marker-line">${line}爻</div>
+                    <div class="planet-marker-zodiac">${zodiac}</div>
+                `;
+                
+                wrapper.appendChild(nodeEl);
+                
+                // 記錄節點中心位置
+                const center = getCenterPoint(node.gridRow, node.gridCol);
+                nodePositions[node.id] = center;
+            });
+            
+            // 輔助函數：獲取連接線顏色
+            function getConnectionColor(colorType) {
+                switch(colorType) {
+                    case 'blue': return '#3498db';  // 珍珠序列 - 藍色
+                    case 'green': return '#76a07b';  // 啟動序列 - 綠色（與球體顏色一致）
+                    case 'red': return '#c0392b';    // 金星序列 - 紅色
+                    default: return '#999';
+                }
+            }
+            
+            // 繪製 SVG 連接線的函數
+            function drawGeneKeyLines() {
+                // 清除之前的連線
+                svg.innerHTML = '';
+                
+                // 獲取 containerWrapper 元素（通過查找包含 SVG 的父元素）
+                const svgParent = svg.parentElement;
+                if (!svgParent) {
+                    console.warn('找不到 SVG 的父元素');
+                    return;
+                }
+                
+                const containerWrapperRect = svgParent.getBoundingClientRect();
+                
+                // 重新計算所有節點的實際中心位置（基於 DOM 元素）
+                const actualPositions = {};
+                geneKeyNodes.forEach(node => {
+                    const nodeEl = document.getElementById(`gene-key-${node.id}`);
+                    if (nodeEl && svgParent) {
+                        const nodeRect = nodeEl.getBoundingClientRect();
+                        // 計算相對於 SVG 的座標（球體圓心）
+                        // SVG 是絕對定位在 containerWrapper 內的，所以使用 containerWrapper 作為參考
+                        actualPositions[node.id] = {
+                            x: nodeRect.left - containerWrapperRect.left + nodeRect.width / 2,
+                            y: nodeRect.top - containerWrapperRect.top + nodeRect.height / 2
+                        };
+                    } else {
+                        // 如果 DOM 還沒渲染，使用計算的座標
+                        actualPositions[node.id] = nodePositions[node.id];
+                    }
+                });
+                
+                // 繪製 SVG 連接線（使用 path 元素）
+                connections.forEach(conn => {
+                    const fromPos = actualPositions[conn.from] || nodePositions[conn.from];
+                    const toPos = actualPositions[conn.to] || nodePositions[conn.to];
+                    
+                    if (!fromPos || !toPos) {
+                        console.warn(`找不到節點位置: ${conn.from} -> ${conn.to}`);
+                        return;
+                    }
+                    
+                    // 創建 SVG path 元素
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    
+                    // 使用簡單的直線連接球體圓心
+                    const d = `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`;
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', `gene-key-path gene-key-path-${conn.color}`);
+                    path.setAttribute('stroke', getConnectionColor(conn.color));
+                    path.setAttribute('stroke-width', '4');
+                    path.setAttribute('stroke-opacity', '0.5');
+                    path.setAttribute('fill', 'none');
+                    
+                    svg.appendChild(path);
+                });
+                
+                console.log('已繪製', connections.length, '條連接線');
+            }
+            
+            // 將 SVG 和 wrapper 放入容器
+            const containerWrapper = document.createElement('div');
+            containerWrapper.style.position = 'relative';
+            containerWrapper.style.width = '900px';
+            containerWrapper.style.height = '900px';
+            containerWrapper.style.margin = '-20px auto 0 -30px';
+            
+            // 先添加 SVG（底層）
+            containerWrapper.appendChild(svg);
+            // 再添加 wrapper（上層）
+            containerWrapper.appendChild(wrapper);
+            
+            container.innerHTML = '';
+            container.appendChild(containerWrapper);
+            section.style.display = 'block';
+            
+            // 在所有節點渲染完成後繪製連線（延遲更長以確保 DOM 完全渲染）
+            setTimeout(() => {
+                drawGeneKeyLines();
+            }, 200);
+        }
+
+        // 渲染文字結果
+        function renderTextResults(data) {
+            const container = document.getElementById('text-results-container');
+            
+            let typeClass = 'type-generator';
+            if (data.type) {
+                if (data.type.includes('顯示型生產者') || data.type.includes('Manifesting Generator')) {
+                    typeClass = 'type-manifestor';  // 使用相同的樣式
+                } else if (data.type.includes('顯示者') || data.type.includes('Manifestor')) {
+                typeClass = 'type-manifestor';
+                } else if (data.type.includes('投射者') || data.type.includes('Projector')) {
+                typeClass = 'type-projector';
+                } else if (data.type.includes('反映者') || data.type.includes('Reflector')) {
+                typeClass = 'type-reflector';
+                }
+            }
+
+            let html = `
+                <div class="info-box">
+                    <h3>輸入數據</h3>
+                    <p><strong>日期時間：</strong>${data.input_date || 'N/A'}</p>
+                </div>
+
+                <div class="info-box highlight-box">
+                    <h3>人生角色 (Profile)</h3>
+                    <div class="profile-badge">${data.profile || 'N/A'}</div>
+                </div>
+
+                <div class="info-box">
+                    <h3>人類圖類型</h3>
+                    <div class="type-badge ${typeClass}">${data.type || 'N/A'}</div>
+                </div>
+
+                <div class="info-box">
+                    <h3>人生策略</h3>
+                    <p class="strategy-text">${data.strategy || 'N/A'}</p>
+                </div>
+
+                <div class="info-box">
+                    <h3>決策模式</h3>
+                    <p class="definition-text">${data.decision_mode || 'N/A'}</p>
+                </div>
+
+                <div class="info-box">
+                    <h3>內在權威</h3>
+                    <p class="authority-text">${data.inner_authority || 'N/A'}</p>
+                </div>
+
+                <div class="info-box warning-box">
+                    <h3>非自己主題</h3>
+                    <p class="theme-text">${data.not_self_theme || 'N/A'}</p>
+                </div>
+            `;
+
+            if (data.defined_channels && data.defined_channels.length > 0) {
+                html += `
+                    <div class="info-box" style="margin-top: 20px;">
+                        <h3>定義的通道</h3>
+                        <p>共 ${data.defined_channels.length} 條通道被定義</p>
+                        <p style="margin-top: 10px;">
+                            ${data.defined_channels.map(ch => `通道 ${ch[0]}-${ch[1]}`).join(', ')}
+                        </p>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // 渲染行星列表到側邊欄
+        function renderPlanetLists(personalityList, designList) {
+            // 行星 Unicode 圖標映射
+            const planetIcons = {
+                'Sun': '☉',
+                'Earth': '⊕',
+                'Moon': '☽',
+                'North Node': '☊',
+                'South Node': '☋',
+                'Mercury': '☿',
+                'Venus': '♀',
+                'Mars': '♂',
+                'Jupiter': '♃',
+                'Saturn': '♄',
+                'Uranus': '♅',
+                'Neptune': '♆',
+                'Pluto': '♇'
+            };
+            
+            // 行星名稱中文映射（保留作為備用）
+            const planetNames = {
+                'Sun': '太陽',
+                'Earth': '地球',
+                'Moon': '月亮',
+                'North Node': '北交',
+                'South Node': '南交',
+                'Mercury': '水星',
+                'Venus': '金星',
+                'Mars': '火星',
+                'Jupiter': '木星',
+                'Saturn': '土星',
+                'Uranus': '天王星',
+                'Neptune': '海王星',
+                'Pluto': '冥王星'
+            };
+
+            // 輔助函數：格式化閘門.爻線顯示（分開顯示，爻線較小，並包含星座符號和箭頭）
+            function formatGateLine(planet, showArrow = true) {
+                if (!planet.gate_line) return '';
+                const parts = planet.gate_line.toString().split('.');
+                if (parts.length === 2) {
+                    const gate = parts[0];
+                    const line = parts[1];
+                    const zodiac = planet.constellation_symbol || '';
+                    const arrow = (showArrow && planet.arrow_direction) || '';
+                    
+                    // 箭頭顏色：▲綠色，▼紅色
+                    let arrowHtml = '';
+                    if (arrow === '▲') {
+                        arrowHtml = `<span class="arrow-ascending" title="順行高頻">▲</span>`;
+                    } else if (arrow === '▼') {
+                        arrowHtml = `<span class="arrow-descending" title="逆行">▼</span>`;
+                    }
+                    
+                    return `
+                        ${zodiac ? `<span class="zodiac-symbol">${zodiac}</span>` : ''}
+                        <span class="gate-number">${gate}</span>
+                        <span class="gate-separator">.</span>
+                        <span class="line-number">${line}</span>
+                        ${arrowHtml}
+                    `;
+                }
+                // 如果格式不正確，返回原始值
+                return `<span class="gate-number">${planet.gate_line}</span>`;
+            }
+
+            // 渲染設計層（Design/左側）- 使用 design_list
+            const designContainer = document.getElementById('design-planet-list');
+            if (designContainer && designList && Array.isArray(designList)) {
+                let html = '';
+                designList.forEach(planet => {
+                    const planetName = planetNames[planet.planet] || planet.planet;
+                    const planetIcon = planetIcons[planet.planet] || planet.planet.charAt(0);
+                    const gateLineHtml = formatGateLine(planet, true);
+                    html += `
+                        <div class="planet-item">
+                            <div class="planet-icon">${planetIcon}</div>
+                            <div class="planet-name">${planetName}</div>
+                            <div class="planet-gate-line">${gateLineHtml}</div>
+                        </div>
+                    `;
+                });
+                designContainer.innerHTML = html || '<div style="text-align: center; padding: 20px; color: #666;">無數據</div>';
+            } else if (designContainer) {
+                designContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">等待數據...</div>';
+            }
+
+            // 渲染意識層（Personality/右側）- 使用 personality_list
+            const personalityContainer = document.getElementById('personality-planet-list');
+            if (personalityContainer && personalityList && Array.isArray(personalityList)) {
+                let html = '';
+                personalityList.forEach(planet => {
+                    const planetName = planetNames[planet.planet] || planet.planet;
+                    const planetIcon = planetIcons[planet.planet] || planet.planet.charAt(0);
+                    const gateLineHtml = formatGateLine(planet, true);
+                    html += `
+                        <div class="planet-item">
+                            <div class="planet-icon">${planetIcon}</div>
+                            <div class="planet-name">${planetName}</div>
+                            <div class="planet-gate-line">${gateLineHtml}</div>
+                        </div>
+                    `;
+                });
+                personalityContainer.innerHTML = html || '<div style="text-align: center; padding: 20px; color: #666;">無數據</div>';
+            } else if (personalityContainer) {
+                personalityContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">等待數據...</div>';
+            }
+        }
+
+        // 顯示訊息
+        function showMessage(message, type = 'error') {
+            const messageArea = document.getElementById('message-area');
+            const className = type === 'error' ? 'error-message' : 'success-message';
+            messageArea.innerHTML = `<div class="${className}">${message}</div>`;
+            setTimeout(() => {
+                messageArea.innerHTML = '';
+            }, 5000);
+        }
+
+        // 表單提交處理
+        document.getElementById('birth-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const calculateBtn = document.getElementById('calculate-btn');
+            const resultsContainer = document.getElementById('results-container');
+            const messageArea = document.getElementById('message-area');
+            
+            // 驗證是否選擇了縣市和區域
+            const county = document.getElementById('county').value;
+            const district = document.getElementById('district').value;
+            if (!county || !district) {
+                showMessage('請選擇縣市和區域', 'error');
+                return;
+            }
+            
+            // 收集表單數據
+            const longitudeInput = document.getElementById('longitude');
+            const latitudeInput = document.getElementById('latitude');
+            const formData = {
+                year: parseInt(document.getElementById('year').value),
+                month: parseInt(document.getElementById('month').value),
+                day: parseInt(document.getElementById('day').value),
+                time: document.getElementById('time').value,
+                timezone: document.getElementById('timezone').value.trim(),
+                longitude: parseFloat(longitudeInput.value),
+                latitude: parseFloat(latitudeInput.value)
+            };
+
+            // 驗證數據
+            if (!formData.time || !formData.time.match(/^\d{2}:\d{2}$/)) {
+                showMessage('請輸入有效的時間格式 (HH:MM)', 'error');
+                return;
+            }
+
+            // 確保經緯度已根據選擇的縣市區域更新
+            if (county && district) {
+                // 強制更新一次，確保使用最新的選擇
+                updateCoordinates(county, district);
+                // 重新讀取更新後的值
+                formData.longitude = parseFloat(longitudeInput.value);
+                formData.latitude = parseFloat(latitudeInput.value);
+            }
+            
+            // 驗證經緯度是否有效
+            if (isNaN(formData.longitude) || isNaN(formData.latitude)) {
+                showMessage('經緯度數據無效，請重新選擇縣市和區域', 'error');
+                return;
+            }
+
+            console.log('提交表單數據:', formData);
+
+            // 禁用按鈕，顯示載入狀態
+            calculateBtn.disabled = true;
+            calculateBtn.textContent = '計算中...';
+            messageArea.innerHTML = '';
+
+            try {
+                // 發送 POST 請求到後端
+                const response = await fetch('/calculate_hd', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                // 檢查響應狀態
+                if (!response.ok) {
+                    // 嘗試解析錯誤響應
+                    let errorText = '';
+                    try {
+                        const errorResult = await response.json();
+                        errorText = errorResult.error || `HTTP ${response.status}`;
+                    } catch (e) {
+                        errorText = await response.text() || `HTTP ${response.status}`;
+                    }
+                    showMessage(`伺服器錯誤: ${errorText}`, 'error');
+                    return;
+                }
+
+                const result = await response.json();
+
+                if (result.status === 'success' && result.data) {
+                    // 顯示結果區域
+                    resultsContainer.classList.remove('hidden');
+                    
+                    // 渲染視覺化
+                    renderHumanDesign(result.data);
+                    
+                    showMessage('計算完成！', 'success');
+                } else {
+                    showMessage(result.error || '計算失敗，請檢查輸入數據', 'error');
+                }
+            } catch (error) {
+                console.error('錯誤:', error);
+                let errorMessage = '無法連接到伺服器。請確保後端服務正在運行。';
+                if (error.message) {
+                    errorMessage += ` (${error.message})`;
+                }
+                showMessage(errorMessage, 'error');
+            } finally {
+                // 恢復按鈕狀態
+                calculateBtn.disabled = false;
+                calculateBtn.textContent = '計算人類圖';
+            }
+        });
+
+        // 頁面載入時初始化
+        function initializePage() {
+            // 初始化縣市選單
+            initializeCountySelect();
+            
+            // 設置事件監聽器
+            const countySelect = document.getElementById('county');
+            const districtSelect = document.getElementById('district');
+            
+            if (countySelect && districtSelect) {
+                // 縣市選擇變更事件
+                countySelect.addEventListener('change', function() {
+                    const county = this.value;
+                    updateDistrictSelect(county);
+                    // 清空經緯度（等待選擇區域後再更新）
+                    if (!county) {
+                        const longitudeInput = document.getElementById('longitude');
+                        const latitudeInput = document.getElementById('latitude');
+                        if (longitudeInput) longitudeInput.value = '121.5';
+                        if (latitudeInput) latitudeInput.value = '25.0';
+                    }
+                });
+
+                // 區域選擇變更事件
+                districtSelect.addEventListener('change', function() {
+                    const county = countySelect.value;
+                    const district = this.value;
+                    console.log('選擇了區域:', { county, district });
+                    if (county && district) {
+                        updateCoordinates(county, district);
+                    }
+                });
+            }
+
+        // 重置按鈕
+            const resetBtn = document.getElementById('reset-btn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+            document.getElementById('birth-form').reset();
+            document.getElementById('message-area').innerHTML = '';
+            document.getElementById('results-container').classList.add('hidden');
+                    initializeCountySelect();
+                });
+            }
+        }
+
+        // 確保 DOM 載入後執行初始化
+        (function() {
+            function init() {
+                try {
+                    console.log('開始初始化頁面...');
+                    console.log('DOM readyState:', document.readyState);
+                    console.log('taiwanLocations 是否存在:', typeof taiwanLocations !== 'undefined');
+                    
+                    if (typeof taiwanLocations === 'undefined') {
+                        console.error('taiwanLocations 未定義！');
+                        return;
+                    }
+                    
+                    if (document.readyState === 'loading') {
+                        console.log('等待 DOM 載入...');
+                        document.addEventListener('DOMContentLoaded', initializePage);
+                    } else {
+                        console.log('DOM 已準備好，立即執行初始化');
+                        initializePage();
+                    }
+                } catch (error) {
+                    console.error('初始化錯誤:', error);
+                }
+            }
+            
+            // 執行初始化
+            init();
+        })();
+    </script>
+</body>
+</html>
+
