@@ -1,4 +1,2 @@
-# Netlify Function 依賴項
-# 此 Function 僅使用 Python 標準庫，無需額外依賴
-# 保留此文件以符合 Netlify 的結構要求
-
+pyswisseph
+pytz
