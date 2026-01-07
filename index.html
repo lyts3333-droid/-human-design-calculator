@@ -842,6 +842,282 @@
         .gene-key-sphere.orange .planet-marker-zodiac {
             color: #ffffff;
         }
+
+        /* ==================== 手機版 RWD 響應式佈局 ==================== */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .header {
+                padding: 20px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.6em;
+            }
+
+            .header p {
+                font-size: 0.95em;
+            }
+
+            .content {
+                padding: 15px;
+            }
+
+            .input-section {
+                padding: 15px;
+            }
+
+            .input-section h2 {
+                font-size: 1.4em;
+            }
+
+            /* 表單優化：加大點擊區域 */
+            .form-group {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .form-item input,
+            .form-item select {
+                padding: 16px 14px;
+                font-size: 16px; /* 防止 iOS 縮放 */
+                min-height: 50px;
+            }
+
+            .form-item label {
+                font-size: 1.05em;
+                margin-bottom: 6px;
+            }
+
+            /* 按鈕加大 */
+            .button-group {
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .btn {
+                padding: 18px 30px;
+                font-size: 1.15em;
+                width: 100%;
+                min-height: 56px;
+            }
+
+            /* 結果區域：垂直堆疊 */
+            .results-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .section {
+                padding: 15px;
+            }
+
+            .section h2 {
+                font-size: 1.3em;
+            }
+
+            /* Body Graph 容器：垂直堆疊 */
+            #body-graph-container {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+                gap: 15px;
+                min-height: auto;
+                padding: 15px;
+            }
+
+            /* 側邊欄樣式調整 */
+            .planet-sidebar {
+                padding: 15px;
+            }
+
+            .sidebar-title {
+                font-size: 1.3em;
+                padding: 10px;
+                margin-bottom: 12px;
+            }
+
+            .planet-item {
+                padding: 10px 8px;
+                margin-bottom: 8px;
+                font-size: 1em;
+            }
+
+            .planet-icon {
+                width: 32px;
+                height: 32px;
+                font-size: 1.3em;
+                margin-right: 10px;
+            }
+
+            .planet-name {
+                flex: 0 0 60px;
+                font-size: 0.95em;
+            }
+
+            .planet-gate-line {
+                flex: 0 0 90px;
+            }
+
+            .gate-number {
+                font-size: 1.2em;
+            }
+
+            .gate-separator {
+                font-size: 1.2em;
+            }
+
+            .line-number {
+                font-size: 0.85em;
+            }
+
+            .zodiac-symbol {
+                font-size: 1.1em;
+            }
+
+            .arrow-ascending,
+            .arrow-descending {
+                font-size: 1em;
+            }
+
+            .planet-sign {
+                font-size: 0.9em;
+            }
+
+            /* 基因天命區塊：縮小版 */
+            #gene-keys-container {
+                min-height: auto;
+                padding: 20px 10px;
+                overflow-x: hidden;
+            }
+
+            .gene-keys-container-wrapper {
+                width: 100% !important;
+                max-width: 400px !important;
+                height: auto !important;
+                margin: 0 auto !important;
+            }
+
+            .gene-keys-wrapper {
+                width: 100% !important;
+                height: auto !important;
+                min-height: 350px;
+                margin: 0 auto !important;
+                gap: 25px !important;
+                padding: 20px 10px !important;
+            }
+
+            /* 縮小球體 */
+            .gene-key-sphere {
+                width: 70px;
+                height: 70px;
+                padding: 3px;
+            }
+
+            .gene-key-sphere .planet-marker-name {
+                font-size: 0.5em;
+            }
+
+            .gene-key-sphere .planet-marker-gate {
+                font-size: 1.5em;
+            }
+
+            .gene-key-sphere .planet-marker-line {
+                font-size: 0.5em;
+            }
+
+            .gene-key-sphere .planet-marker-zodiac {
+                font-size: 0.45em;
+            }
+
+            /* SVG 連線調整 */
+            .gene-keys-svg {
+                width: 100% !important;
+                height: 100% !important;
+            }
+
+            /* Info box 調整 */
+            .info-box {
+                padding: 14px;
+                margin: 12px 0;
+            }
+
+            .info-box h3 {
+                font-size: 1.2em;
+            }
+
+            .info-box p {
+                font-size: 1.1em;
+            }
+
+            .profile-badge {
+                font-size: 2em;
+                padding: 10px 18px;
+            }
+
+            .type-badge {
+                font-size: 1.1em;
+                padding: 10px 20px;
+            }
+
+            .strategy-text,
+            .authority-text,
+            .definition-text,
+            .theme-text {
+                font-size: 1.15em;
+            }
+        }
+
+        /* 更小螢幕（小於 480px）的額外調整 */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.4em;
+            }
+
+            .gene-keys-wrapper {
+                gap: 25px;
+                padding: 20px 5px;
+            }
+
+            .gene-key-sphere {
+                width: 58px;
+                height: 58px;
+            }
+
+            .gene-key-sphere .planet-marker-name {
+                font-size: 0.4em;
+            }
+
+            .gene-key-sphere .planet-marker-gate {
+                font-size: 1.2em;
+            }
+
+            .gene-key-sphere .planet-marker-line {
+                font-size: 0.4em;
+            }
+
+            .gene-key-sphere .planet-marker-zodiac {
+                font-size: 0.35em;
+                display: none; /* 隱藏星座符號以節省空間 */
+            }
+
+            .planet-name {
+                flex: 0 0 50px;
+                font-size: 0.85em;
+            }
+
+            .planet-gate-line {
+                flex: 0 0 75px;
+            }
+
+            .planet-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 1.1em;
+                margin-right: 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1736,9 +2012,32 @@
             // 將 SVG 和 wrapper 放入容器
             const containerWrapper = document.createElement('div');
             containerWrapper.style.position = 'relative';
-            containerWrapper.style.width = '900px';
-            containerWrapper.style.height = '900px';
-            containerWrapper.style.margin = '-20px auto 0 -30px';
+            containerWrapper.className = 'gene-keys-container-wrapper';
+            
+            // 根據螢幕寬度動態設置尺寸
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                const containerWidth = Math.min(window.innerWidth - 40, 400);
+                containerWrapper.style.width = containerWidth + 'px';
+                containerWrapper.style.height = containerWidth + 'px';
+                containerWrapper.style.margin = '0 auto';
+                
+                // 調整 wrapper 網格
+                wrapper.style.width = containerWidth + 'px';
+                wrapper.style.height = containerWidth + 'px';
+                wrapper.style.margin = '0 auto';
+                wrapper.style.padding = '20px';
+                wrapper.style.gap = isMobile && window.innerWidth <= 480 ? '15px' : '25px';
+                
+                // 調整 SVG
+                svg.setAttribute('width', containerWidth);
+                svg.setAttribute('height', containerWidth);
+                svg.setAttribute('viewBox', `0 0 ${containerWidth} ${containerWidth}`);
+            } else {
+                containerWrapper.style.width = '900px';
+                containerWrapper.style.height = '900px';
+                containerWrapper.style.margin = '-20px auto 0 -30px';
+            }
             
             // 先添加 SVG（底層）
             containerWrapper.appendChild(svg);
@@ -1753,73 +2052,47 @@
             setTimeout(() => {
                 drawGeneKeyLines();
             }, 200);
+
+            // 監聽視窗大小變化，重新繪製連線
+            let resizeTimeout;
+            const handleResize = () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    // 更新 SVG viewBox 以適應新尺寸
+                    const wrapperRect = wrapper.getBoundingClientRect();
+                    svg.setAttribute('width', wrapperRect.width);
+                    svg.setAttribute('height', wrapperRect.height);
+                    svg.setAttribute('viewBox', `0 0 ${wrapperRect.width} ${wrapperRect.height}`);
+                    
+                    // 重新繪製連線
+                    drawGeneKeyLines();
+                    console.log('視窗大小改變，重新繪製連線');
+                }, 150);
+            };
+
+            // 添加 resize 事件監聽器
+            window.addEventListener('resize', handleResize);
+
+            // 監聽螢幕方向變化（手機旋轉）
+            window.addEventListener('orientationchange', () => {
+                setTimeout(handleResize, 300);
+            });
+
+            // 將 drawGeneKeyLines 暴露給全域，以便其他地方可以調用
+            window.redrawGeneKeyLines = drawGeneKeyLines;
         }
 
         // 渲染文字結果
         function renderTextResults(data) {
             const container = document.getElementById('text-results-container');
-            
-            let typeClass = 'type-generator';
-            if (data.type) {
-                if (data.type.includes('顯示型生產者') || data.type.includes('Manifesting Generator')) {
-                    typeClass = 'type-manifestor';  // 使用相同的樣式
-                } else if (data.type.includes('顯示者') || data.type.includes('Manifestor')) {
-                typeClass = 'type-manifestor';
-                } else if (data.type.includes('投射者') || data.type.includes('Projector')) {
-                typeClass = 'type-projector';
-                } else if (data.type.includes('反映者') || data.type.includes('Reflector')) {
-                typeClass = 'type-reflector';
-                }
-            }
 
+            // 只顯示輸入數據和行星信息
             let html = `
                 <div class="info-box">
                     <h3>輸入數據</h3>
                     <p><strong>日期時間：</strong>${data.input_date || 'N/A'}</p>
                 </div>
-
-                <div class="info-box highlight-box">
-                    <h3>人生角色 (Profile)</h3>
-                    <div class="profile-badge">${data.profile || 'N/A'}</div>
-                </div>
-
-                <div class="info-box">
-                    <h3>人類圖類型</h3>
-                    <div class="type-badge ${typeClass}">${data.type || 'N/A'}</div>
-                </div>
-
-                <div class="info-box">
-                    <h3>人生策略</h3>
-                    <p class="strategy-text">${data.strategy || 'N/A'}</p>
-                </div>
-
-                <div class="info-box">
-                    <h3>決策模式</h3>
-                    <p class="definition-text">${data.decision_mode || 'N/A'}</p>
-                </div>
-
-                <div class="info-box">
-                    <h3>內在權威</h3>
-                    <p class="authority-text">${data.inner_authority || 'N/A'}</p>
-                </div>
-
-                <div class="info-box warning-box">
-                    <h3>非自己主題</h3>
-                    <p class="theme-text">${data.not_self_theme || 'N/A'}</p>
-                </div>
             `;
-
-            if (data.defined_channels && data.defined_channels.length > 0) {
-                html += `
-                    <div class="info-box" style="margin-top: 20px;">
-                        <h3>定義的通道</h3>
-                        <p>共 ${data.defined_channels.length} 條通道被定義</p>
-                        <p style="margin-top: 10px;">
-                            ${data.defined_channels.map(ch => `通道 ${ch[0]}-${ch[1]}`).join(', ')}
-                        </p>
-                    </div>
-                `;
-            }
 
             container.innerHTML = html;
         }
