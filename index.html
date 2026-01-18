@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=3.0, user-scalable=yes">
     <title>人類圖計算器 - Web 應用</title>
     <style>
         * {
@@ -146,6 +146,7 @@
             grid-template-columns: 1fr 1.6fr;
             gap: 30px;
             margin-top: 30px;
+            max-width: 100%; /* 確保可以使用全部寬度 */
         }
 
         @media (max-width: 1024px) {
@@ -175,9 +176,10 @@
                 50% 100%;
             background-repeat: no-repeat;
             border-radius: 15px;
-            padding: 25px;
+            padding: 25px 15px; /* 減少左右 padding */
             position: relative;
         }
+        
 
         .section h2 {
             color: #667eea;
@@ -918,6 +920,20 @@
                 font-size: 1.3em;
             }
 
+            /* 基因天命區塊的 section：允許水平滾動 */
+            #gene-keys-section {
+                padding: 15px 0 !important; /* 移除左右 padding */
+                overflow-x: visible !important;
+                overflow-y: visible !important;
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            /* 確保內容區域可以滾動 */
+            #gene-keys-section .section {
+                overflow: visible !important;
+            }
+
             /* Body Graph 容器：垂直堆疊 */
             #body-graph-container {
                 grid-template-columns: 1fr;
@@ -985,56 +1001,95 @@
                 font-size: 0.9em;
             }
 
-            /* 基因天命區塊：縮小版 */
+            /* 基因天命區塊：手機版允許滾動和縮放 */
             #gene-keys-container {
                 min-height: auto;
-                padding: 20px 10px;
-                overflow-x: hidden;
+                padding: 20px 0;
+                overflow-x: scroll !important; /* 強制啟用水平滾動 */
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch; /* iOS 平滑滾動 */
+                scrollbar-width: thin; /* Firefox */
+                touch-action: pan-x pan-y pinch-zoom; /* 允許平移和縮放 */
+                position: relative;
+                width: 100%;
+                /* 確保可以滾動到所有位置 */
+                scroll-behavior: smooth;
+            }
+
+            /* 自定義滾動條樣式（Webkit 瀏覽器） */
+            #gene-keys-container::-webkit-scrollbar {
+                width: 8px;
+                height: 8px;
+            }
+
+            #gene-keys-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 10px;
+            }
+
+            #gene-keys-container::-webkit-scrollbar-thumb {
+                background: #667eea;
+                border-radius: 10px;
+            }
+
+            #gene-keys-container::-webkit-scrollbar-thumb:hover {
+                background: #764ba2;
             }
 
             .gene-keys-container-wrapper {
-                width: 100% !important;
-                max-width: 400px !important;
-                height: auto !important;
-                margin: 0 auto !important;
+                width: 1020px !important; /* 900px 內容 + 左右各 60px padding */
+                height: 900px !important;
+                margin: 0 !important;
+                position: relative;
+                touch-action: pan-x pan-y pinch-zoom;
+                /* 確保內容完整顯示 */
+                flex-shrink: 0;
             }
 
             .gene-keys-wrapper {
-                width: 100% !important;
-                height: auto !important;
-                min-height: 350px;
-                margin: 0 auto !important;
-                gap: 25px !important;
-                padding: 20px 10px !important;
+                width: 900px !important;
+                height: 900px !important;
+                margin: -20px 0 0 60px !important; /* 右移 60px，讓左邊內容在容器內可見 */
+                gap: 100px !important;
+                padding: 60px !important;
+                box-sizing: border-box;
+                position: relative;
+                flex-shrink: 0;
             }
 
-            /* 縮小球體 */
+            /* 手機版球體：保持與桌面版相同尺寸 */
             .gene-key-sphere {
-                width: 70px;
-                height: 70px;
-                padding: 3px;
+                width: 120px !important;
+                height: 120px !important;
+                padding: 5px !important;
+                box-sizing: border-box;
+                flex-shrink: 0; /* 防止球體被壓縮 */
             }
 
+            /* 手機版字體：保持與桌面版相同大小 */
             .gene-key-sphere .planet-marker-name {
-                font-size: 0.5em;
+                font-size: 0.7em !important;
             }
 
             .gene-key-sphere .planet-marker-gate {
-                font-size: 1.5em;
+                font-size: 2.5em !important;
             }
 
             .gene-key-sphere .planet-marker-line {
-                font-size: 0.5em;
+                font-size: 0.7em !important;
             }
 
             .gene-key-sphere .planet-marker-zodiac {
-                font-size: 0.45em;
+                font-size: 0.65em !important;
             }
 
-            /* SVG 連線調整 */
+            /* SVG 連線：保持原始尺寸，確保完整顯示 */
             .gene-keys-svg {
-                width: 100% !important;
-                height: 100% !important;
+                width: 900px !important;
+                height: 900px !important;
+                left: 60px !important; /* 與 wrapper 對齊 */
+                position: absolute;
+                top: 0;
             }
 
             /* Info box 調整 */
@@ -1075,31 +1130,45 @@
                 font-size: 1.4em;
             }
 
+            /* 更小螢幕也保持 900px 尺寸，允許滾動和縮放 */
+            .gene-keys-container-wrapper {
+                width: 900px !important;
+                height: 900px !important;
+            }
+
             .gene-keys-wrapper {
-                gap: 25px;
-                padding: 20px 5px;
+                width: 900px !important;
+                height: 900px !important;
+                margin: -20px auto 0 -30px !important;
+                gap: 100px !important;
+                padding: 60px !important;
             }
 
             .gene-key-sphere {
-                width: 58px;
-                height: 58px;
+                width: 120px !important;
+                height: 120px !important;
+                flex-shrink: 0 !important;
             }
 
             .gene-key-sphere .planet-marker-name {
-                font-size: 0.4em;
+                font-size: 0.7em !important;
             }
 
             .gene-key-sphere .planet-marker-gate {
-                font-size: 1.2em;
+                font-size: 2.5em !important;
             }
 
             .gene-key-sphere .planet-marker-line {
-                font-size: 0.4em;
+                font-size: 0.7em !important;
             }
 
             .gene-key-sphere .planet-marker-zodiac {
-                font-size: 0.35em;
-                display: none; /* 隱藏星座符號以節省空間 */
+                font-size: 0.65em !important;
+            }
+
+            .gene-keys-svg {
+                width: 900px !important;
+                height: 900px !important;
             }
 
             .planet-name {
@@ -1213,13 +1282,7 @@
                         </div>
                     </div>
 
-                    <!-- 右側：分析結果 -->
-                    <div class="section">
-                        <h2>分析結果</h2>
-                        <div id="text-results-container">
-                            <div class="loading">等待計算結果...</div>
-                        </div>
-                    </div>
+                    <!-- 分析結果區塊已移除 -->
                 </div>
                 
                 <!-- 基因天命 (Gene Keys) 黃金之路區塊 -->
@@ -1750,8 +1813,7 @@
                 return;
             }
 
-            // 1. 渲染文字結果
-            renderTextResults(data);
+            // 文字分析結果已移除
 
             // 2. 渲染行星列表（如果數據包含）
             // 注意：參數順序為 (personalityList, designList)
@@ -2014,30 +2076,14 @@
             containerWrapper.style.position = 'relative';
             containerWrapper.className = 'gene-keys-container-wrapper';
             
-            // 根據螢幕寬度動態設置尺寸
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) {
-                const containerWidth = Math.min(window.innerWidth - 40, 400);
-                containerWrapper.style.width = containerWidth + 'px';
-                containerWrapper.style.height = containerWidth + 'px';
-                containerWrapper.style.margin = '0 auto';
-                
-                // 調整 wrapper 網格
-                wrapper.style.width = containerWidth + 'px';
-                wrapper.style.height = containerWidth + 'px';
-                wrapper.style.margin = '0 auto';
-                wrapper.style.padding = '20px';
-                wrapper.style.gap = isMobile && window.innerWidth <= 480 ? '15px' : '25px';
-                
-                // 調整 SVG
-                svg.setAttribute('width', containerWidth);
-                svg.setAttribute('height', containerWidth);
-                svg.setAttribute('viewBox', `0 0 ${containerWidth} ${containerWidth}`);
-            } else {
+            // 尺寸由 CSS 控制，手機版會自動調整
+            // 不設置 inline style，讓 CSS 的 !important 規則生效
+            if (window.innerWidth > 768) {
                 containerWrapper.style.width = '900px';
                 containerWrapper.style.height = '900px';
-                containerWrapper.style.margin = '-20px auto 0 -30px';
+                containerWrapper.style.margin = '0 auto';
             }
+            // 手機版完全由 CSS 控制
             
             // 先添加 SVG（底層）
             containerWrapper.appendChild(svg);
@@ -2053,21 +2099,15 @@
                 drawGeneKeyLines();
             }, 200);
 
-            // 監聽視窗大小變化，重新繪製連線
+            // 監聽視窗大小變化，重新繪製連線（尺寸保持 900px，只重新計算連線）
             let resizeTimeout;
             const handleResize = () => {
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(() => {
-                    // 更新 SVG viewBox 以適應新尺寸
-                    const wrapperRect = wrapper.getBoundingClientRect();
-                    svg.setAttribute('width', wrapperRect.width);
-                    svg.setAttribute('height', wrapperRect.height);
-                    svg.setAttribute('viewBox', `0 0 ${wrapperRect.width} ${wrapperRect.height}`);
-                    
-                    // 重新繪製連線
+                    // 重新繪製連線（尺寸始終是 900px，不需要調整）
                     drawGeneKeyLines();
                     console.log('視窗大小改變，重新繪製連線');
-                }, 150);
+                }, 200);
             };
 
             // 添加 resize 事件監聽器
@@ -2082,20 +2122,7 @@
             window.redrawGeneKeyLines = drawGeneKeyLines;
         }
 
-        // 渲染文字結果
-        function renderTextResults(data) {
-            const container = document.getElementById('text-results-container');
-
-            // 只顯示輸入數據和行星信息
-            let html = `
-                <div class="info-box">
-                    <h3>輸入數據</h3>
-                    <p><strong>日期時間：</strong>${data.input_date || 'N/A'}</p>
-                </div>
-            `;
-
-            container.innerHTML = html;
-        }
+        // 渲染文字結果（已移除）
 
         // 渲染行星列表到側邊欄
         function renderPlanetLists(personalityList, designList) {

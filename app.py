@@ -1164,10 +1164,6 @@ def calculate_human_design(year: int, month: int, day: int, time_str: str,
     返回:
         包含計算結果的字典，包括：
         - input_date: 輸入的日期時間字符串
-        - type: 人類圖類型
-        - strategy: 人生策略
-        - inner_authority: 內在權威
-        - defined_centers_status: 能量中心定義狀態
         - personality_list: 意識層（Personality）行星列表
         - design_list: 設計層（Design）行星列表
         - error: 錯誤信息（如果有）
@@ -1189,7 +1185,7 @@ def calculate_human_design(year: int, month: int, day: int, time_str: str,
     except Exception as e:
         return {"error": f"處理日期時間時發生錯誤: {e}"}
     
-    # 步驟 1: 使用真實天文計算生成行星列表（優先計算，因為需要太陽爻線來計算 Profile）
+    # 步驟 1: 使用真實天文計算生成行星列表
     try:
         # 解析時間字符串
         time_parts = list(map(int, time_str.split(':')))
@@ -1206,43 +1202,9 @@ def calculate_human_design(year: int, month: int, day: int, time_str: str,
         personality_list = generate_personality_list(date_time)
         design_list = generate_design_list(date_time)
     
-    # 步驟 2: 模擬中心定義（用於判斷類型、定義等）
-    # 注意：真實情況下應該根據行星位置和通道來計算中心定義
-    defined_centers = simulate_gate_activations(date_time)
-    defined_channels = []  # 簡化版本，真實情況下需要根據閘門激活計算通道
-    
-    # 步驟 3: 計算人生角色 (Profile) - 根據意識太陽和潛意識太陽的爻線
-    personality_sun = next((p for p in personality_list if p['planet'] == 'Sun'), None)
-    design_sun = next((p for p in design_list if p['planet'] == 'Sun'), None)
-    
-    profile_result = "N/A"
-    if personality_sun and design_sun:
-        personality_sun_line = personality_sun.get('line', 1)
-        design_sun_line = design_sun.get('line', 1)
-        profile_result = calculate_profile(personality_sun_line, design_sun_line)
-    
-    # 步驟 4: 判斷類型和策略
-    type_result, strategy_result = determine_type(defined_centers, defined_channels)
-    
-    # 步驟 5: 判斷內在權威
-    authority_result = determine_authority(defined_centers)
-    
-    # 步驟 6: 計算決策模式（保持原邏輯，僅改名）
-    decision_mode_result = calculate_decision_mode(defined_centers, defined_channels, personality_list, design_list)
-    
-    # 步驟 7: 獲取非自己主題
-    not_self_theme = get_not_self_theme(type_result)
-    
-    # 輸出結果
+    # 輸出結果（只保留輸入數據和行星信息）
     result = {
         "input_date": date_time.strftime("%Y-%m-%d %H:%M"),
-        "profile": profile_result,  # 人生角色
-        "type": type_result,
-        "strategy": strategy_result,
-        "decision_mode": decision_mode_result,  # 決策模式
-        "inner_authority": authority_result,
-        "not_self_theme": not_self_theme,  # 非自己主題
-        "defined_centers_status": defined_centers,
         "personality_list": personality_list,  # 意識層（黑色）- 13個行星
         "design_list": design_list  # 設計層（紅色）- 13個行星
     }
