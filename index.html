@@ -149,6 +149,20 @@
             max-width: 100%; /* 確保可以使用全部寬度 */
         }
 
+        /* 讓「行星閘門與爻線」區塊跨越整個寬度並居中 */
+        .planet-gates-section {
+            grid-column: 1 / -1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .planet-gates-section h2 {
+            width: 100%;
+            text-align: center;
+        }
+
         @media (max-width: 1024px) {
             .results-section {
                 grid-template-columns: 1fr;
@@ -192,11 +206,13 @@
         /* Body Graph 容器樣式 - 使用 Grid 佈局（僅左右兩欄） */
         #body-graph-container {
             width: 100%;
+            max-width: 1200px;
             height: auto;
             min-height: 600px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+            margin: 0 auto !important;
             background: 
                 linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%),
                 radial-gradient(circle at 20% 50%, rgba(100, 200, 255, 0.06) 0%, transparent 50%),
@@ -1014,6 +1030,10 @@
                 width: 100%;
                 /* 確保可以滾動到所有位置 */
                 scroll-behavior: smooth;
+                /* 優化滾動性能 */
+                will-change: scroll-position;
+                /* 確保可以滾動到最左邊 */
+                scroll-padding: 0;
             }
 
             /* 自定義滾動條樣式（Webkit 瀏覽器） */
@@ -1044,6 +1064,13 @@
                 touch-action: pan-x pan-y pinch-zoom;
                 /* 確保內容完整顯示 */
                 flex-shrink: 0;
+                /* 確保容器在滾動容器內正確定位 */
+                left: 0;
+                top: 0;
+                /* 優化渲染性能 */
+                will-change: transform;
+                /* 確保容器不會被壓縮 */
+                min-width: 1020px;
             }
 
             .gene-keys-wrapper {
@@ -1055,6 +1082,8 @@
                 box-sizing: border-box;
                 position: relative;
                 flex-shrink: 0;
+                /* 確保球體位置準確 */
+                transform: none !important;
             }
 
             /* 手機版球體：保持與桌面版相同尺寸 */
@@ -1090,6 +1119,8 @@
                 left: 60px !important; /* 與 wrapper 對齊 */
                 position: absolute;
                 top: 0;
+                /* 確保 SVG 與 wrapper 完全對齊 */
+                transform: none !important;
             }
 
             /* Info box 調整 */
@@ -1257,7 +1288,7 @@
             <div id="results-container" class="hidden">
                 <div class="results-section">
                     <!-- 行星列表顯示區域 -->
-                    <div class="section">
+                    <div class="section planet-gates-section">
                         <h2>行星閘門與爻線</h2>
                         <div id="body-graph-container">
                             <!-- 左側欄：Design（潛意識/紅色） -->
@@ -2023,6 +2054,8 @@
                     return;
                 }
                 
+                // 獲取 SVG 的實際位置（考慮滾動和變換）
+                const svgRect = svg.getBoundingClientRect();
                 const containerWrapperRect = svgParent.getBoundingClientRect();
                 
                 // 重新計算所有節點的實際中心位置（基於 DOM 元素）
@@ -2032,10 +2065,13 @@
                     if (nodeEl && svgParent) {
                         const nodeRect = nodeEl.getBoundingClientRect();
                         // 計算相對於 SVG 的座標（球體圓心）
-                        // SVG 是絕對定位在 containerWrapper 內的，所以使用 containerWrapper 作為參考
+                        // 使用 SVG 的實際位置作為參考，確保手機版滾動時位置正確
+                        const relativeX = nodeRect.left - svgRect.left + nodeRect.width / 2;
+                        const relativeY = nodeRect.top - svgRect.top + nodeRect.height / 2;
+                        
                         actualPositions[node.id] = {
-                            x: nodeRect.left - containerWrapperRect.left + nodeRect.width / 2,
-                            y: nodeRect.top - containerWrapperRect.top + nodeRect.height / 2
+                            x: relativeX,
+                            y: relativeY
                         };
                     } else {
                         // 如果 DOM 還沒渲染，使用計算的座標
@@ -2099,8 +2135,10 @@
                 drawGeneKeyLines();
             }, 200);
 
-            // 監聽視窗大小變化，重新繪製連線（尺寸保持 900px，只重新計算連線）
+            // 監聽視窗大小變化和滾動事件，重新繪製連線
             let resizeTimeout;
+            let scrollTimeout;
+            
             const handleResize = () => {
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(() => {
@@ -2108,6 +2146,17 @@
                     drawGeneKeyLines();
                     console.log('視窗大小改變，重新繪製連線');
                 }, 200);
+            };
+            
+            // 監聽滾動事件（手機版需要）
+            const handleScroll = () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    // 手機版滾動時重新計算連線位置
+                    if (window.innerWidth <= 768) {
+                        drawGeneKeyLines();
+                    }
+                }, 100);
             };
 
             // 添加 resize 事件監聽器
@@ -2117,6 +2166,15 @@
             window.addEventListener('orientationchange', () => {
                 setTimeout(handleResize, 300);
             });
+            
+            // 監聽滾動事件（手機版需要，確保線條位置正確）
+            const geneKeysContainer = document.getElementById('gene-keys-container');
+            if (geneKeysContainer) {
+                geneKeysContainer.addEventListener('scroll', handleScroll, { passive: true });
+            }
+            
+            // 也監聽整個視窗的滾動（以防萬一）
+            window.addEventListener('scroll', handleScroll, { passive: true });
 
             // 將 drawGeneKeyLines 暴露給全域，以便其他地方可以調用
             window.redrawGeneKeyLines = drawGeneKeyLines;
