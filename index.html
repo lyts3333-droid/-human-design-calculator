@@ -627,6 +627,245 @@
             margin-top: 40px;
         }
         
+        /* 分類切換按鈕樣式 */
+        .gene-keys-filter-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 25px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            color: #667eea;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+        }
+        
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        /* 分類過濾樣式 */
+        .gene-key-sphere[data-category]:not(.show-all) {
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        
+        .gene-key-sphere[data-category].show-category {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* 基因天命詳細資訊彈窗樣式 */
+        .gene-key-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .gene-key-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        
+        .gene-key-modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            z-index: 10001;
+        }
+        
+        .gene-key-modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10002;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .gene-key-modal-close:hover {
+            background: #f0f0f0;
+            transform: scale(1.1);
+        }
+        
+        .gene-key-modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            color: white;
+        }
+        
+        .gene-key-modal-circle {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .gene-key-modal-circle-label {
+            font-size: 0.7em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        
+        .gene-key-modal-circle-number {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .gene-key-modal-title {
+            flex: 1;
+            font-size: 1.8em;
+            margin: 0;
+        }
+        
+        .gene-key-modal-nav {
+            display: flex;
+            gap: 10px;
+            padding: 15px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            overflow-x: auto;
+            flex-wrap: wrap;
+        }
+        
+        .modal-nav-btn {
+            padding: 8px 16px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: white;
+            color: #495057;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        .modal-nav-btn:hover {
+            background: #e9ecef;
+        }
+        
+        .modal-nav-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .gene-key-modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .modal-content-section {
+            display: none;
+            line-height: 1.8;
+            color: #333;
+        }
+        
+        .modal-content-section.active {
+            display: block;
+        }
+        
+        .modal-content-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .modal-content-section p {
+            margin-bottom: 15px;
+        }
+        
+        /* 手機版彈窗樣式 */
+        @media (max-width: 768px) {
+            .gene-key-modal-content {
+                width: 95%;
+                max-height: 95vh;
+            }
+            
+            .gene-key-modal-header {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+            }
+            
+            .gene-key-modal-title {
+                font-size: 1.4em;
+            }
+            
+            .gene-key-modal-nav {
+                padding: 10px 15px;
+                gap: 8px;
+            }
+            
+            .modal-nav-btn {
+                padding: 6px 12px;
+                font-size: 0.85em;
+            }
+            
+            .gene-key-modal-body {
+                padding: 20px;
+            }
+        }
+        
+        .gene-key-path[data-category]:not(.show-all) {
+            opacity: 0.1;
+        }
+        
+        .gene-key-path[data-category].show-category {
+            opacity: 0.5;
+        }
+        
         #gene-keys-container {
             position: relative;
             width: 100%;
@@ -716,17 +955,38 @@
         }
         
         .gene-key-sphere:hover {
-            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3) !important;
         }
         
         /* 對於沒有自定義 transform 的球體，hover 時應用 scale */
         .gene-key-sphere:not([data-transform]):hover {
-            transform: scale(1.15);
+            transform: scale(1.15) !important;
         }
         
         /* 對於有自定義 transform 的球體，hover 時在原有 transform 基礎上加上 scale */
         .gene-key-sphere[data-transform]:hover {
-            transform: var(--original-transform);
+            transform: var(--original-transform) !important;
+        }
+        
+        /* 確保特定圓球也能正確hover和點擊 */
+        .gene-key-sphere#gene-key-design-mars:hover,
+        .gene-key-sphere#gene-key-design-jupiter:hover,
+        .gene-key-sphere#gene-key-personality-venus:hover,
+        .gene-key-sphere#gene-key-personality-mars:hover {
+            transform: var(--original-transform) !important;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3) !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+        }
+        
+        /* 確保這些圓球在所有情況下都可以點擊和hover */
+        .gene-key-sphere#gene-key-design-mars,
+        .gene-key-sphere#gene-key-design-jupiter,
+        .gene-key-sphere#gene-key-personality-venus,
+        .gene-key-sphere#gene-key-personality-mars {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            transition: transform 0.3s, box-shadow 0.3s !important;
         }
         
         .gene-key-sphere.blue {
@@ -936,18 +1196,33 @@
                 font-size: 1.3em;
             }
 
-            /* 基因天命區塊的 section：允許水平滾動 */
+            /* 基因天命區塊的 section：允許水平滾動和縮放 */
             #gene-keys-section {
                 padding: 15px 0 !important; /* 移除左右 padding */
                 overflow-x: visible !important;
                 overflow-y: visible !important;
                 width: 100%;
                 max-width: 100%;
+                touch-action: pan-x pan-y pinch-zoom !important; /* 允許平移和縮放 */
             }
             
             /* 確保內容區域可以滾動 */
             #gene-keys-section .section {
                 overflow: visible !important;
+                touch-action: pan-x pan-y pinch-zoom !important; /* 允許平移和縮放 */
+            }
+            
+            /* 手機版分類切換按鈕 */
+            .gene-keys-filter-buttons {
+                gap: 10px !important;
+                margin: 15px 0 20px 0 !important;
+            }
+            
+            .filter-btn {
+                padding: 8px 18px !important;
+                font-size: 0.9em !important;
+                flex: 1;
+                min-width: 70px;
             }
 
             /* Body Graph 容器：垂直堆疊 */
@@ -1025,7 +1300,7 @@
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch; /* iOS 平滑滾動 */
                 scrollbar-width: thin; /* Firefox */
-                touch-action: pan-x pan-y pinch-zoom; /* 允許平移和縮放 */
+                touch-action: pan-x pan-y pinch-zoom !important; /* 允許平移和縮放 */
                 position: relative;
                 width: 100%;
                 /* 確保可以滾動到所有位置 */
@@ -1034,6 +1309,11 @@
                 will-change: scroll-position;
                 /* 確保可以滾動到最左邊 */
                 scroll-padding: 0;
+                /* 確保可以縮放 */
+                -webkit-user-select: none;
+                user-select: none;
+                /* 防止縮放時出現選擇文本 */
+                -webkit-tap-highlight-color: transparent;
             }
 
             /* 自定義滾動條樣式（Webkit 瀏覽器） */
@@ -1061,7 +1341,7 @@
                 height: 900px !important;
                 margin: 0 !important;
                 position: relative;
-                touch-action: pan-x pan-y pinch-zoom;
+                touch-action: pan-x pan-y pinch-zoom !important; /* 允許平移和縮放 */
                 /* 確保內容完整顯示 */
                 flex-shrink: 0;
                 /* 確保容器在滾動容器內正確定位 */
@@ -1071,6 +1351,9 @@
                 will-change: transform;
                 /* 確保容器不會被壓縮 */
                 min-width: 1020px;
+                /* 確保可以縮放 */
+                -webkit-user-select: none;
+                user-select: none;
             }
 
             .gene-keys-wrapper {
@@ -1084,6 +1367,10 @@
                 flex-shrink: 0;
                 /* 確保球體位置準確 */
                 transform: none !important;
+                /* 確保可以縮放 */
+                touch-action: pan-x pan-y pinch-zoom !important;
+                -webkit-user-select: none;
+                user-select: none;
             }
 
             /* 手機版球體：保持與桌面版相同尺寸 */
@@ -1093,6 +1380,9 @@
                 padding: 5px !important;
                 box-sizing: border-box;
                 flex-shrink: 0; /* 防止球體被壓縮 */
+                touch-action: pan-x pan-y pinch-zoom !important; /* 允許平移和縮放 */
+                -webkit-user-select: none;
+                user-select: none;
             }
 
             /* 手機版字體：保持與桌面版相同大小 */
@@ -1119,6 +1409,9 @@
                 left: 60px !important; /* 與 wrapper 對齊 */
                 position: absolute;
                 top: 0;
+                /* 確保可以縮放 */
+                touch-action: pan-x pan-y pinch-zoom !important;
+                pointer-events: none; /* SVG 不攔截觸摸事件，讓縮放正常工作 */
                 /* 確保 SVG 與 wrapper 完全對齊 */
                 transform: none !important;
             }
@@ -1319,8 +1612,50 @@
                 <!-- 基因天命 (Gene Keys) 黃金之路區塊 -->
                 <div class="section" id="gene-keys-section" style="display: none; margin-top: 30px;">
                     <h2>基因天命 (Gene Keys) - 黃金之路</h2>
+                    <!-- 分類切換按鈕 -->
+                    <div class="gene-keys-filter-buttons">
+                        <button class="filter-btn active" data-filter="all">全部</button>
+                        <button class="filter-btn" data-filter="talent">天賦</button>
+                        <button class="filter-btn" data-filter="relationship">關係</button>
+                        <button class="filter-btn" data-filter="service">服務</button>
+                    </div>
                     <div id="gene-keys-container">
                         <div class="loading">等待計算結果...</div>
+                    </div>
+                </div>
+                
+                <!-- 基因天命詳細資訊彈窗 -->
+                <div id="gene-key-modal" class="gene-key-modal" style="display: none;">
+                    <div class="gene-key-modal-overlay"></div>
+                    <div class="gene-key-modal-content">
+                        <button class="gene-key-modal-close">&times;</button>
+                        <div class="gene-key-modal-header">
+                            <div class="gene-key-modal-circle">
+                                <div class="gene-key-modal-circle-label">Life's Work</div>
+                                <div class="gene-key-modal-circle-number" id="modal-gate-number">6.6</div>
+                            </div>
+                            <h2 class="gene-key-modal-title" id="modal-title">我畢生工作的領域</h2>
+                        </div>
+                        <div class="gene-key-modal-nav">
+                            <button class="modal-nav-btn active" data-section="meaning">意義</button>
+                            <button class="modal-nav-btn" data-section="shadow">陰影</button>
+                            <button class="modal-nav-btn" data-section="expression">表現形式</button>
+                            <button class="modal-nav-btn" data-section="gift">天賦</button>
+                            <button class="modal-nav-btn" data-section="transformation">轉化過程</button>
+                            <button class="modal-nav-btn" data-section="siddhi">神聖才能</button>
+                            <button class="modal-nav-btn" data-section="siddhi-state">最終狀態</button>
+                            <button class="modal-nav-btn" data-section="summary">綜合意義</button>
+                        </div>
+                        <div class="gene-key-modal-body">
+                            <div class="modal-content-section active" id="modal-content-meaning"></div>
+                            <div class="modal-content-section" id="modal-content-shadow"></div>
+                            <div class="modal-content-section" id="modal-content-expression"></div>
+                            <div class="modal-content-section" id="modal-content-gift"></div>
+                            <div class="modal-content-section" id="modal-content-transformation"></div>
+                            <div class="modal-content-section" id="modal-content-siddhi"></div>
+                            <div class="modal-content-section" id="modal-content-siddhi-state"></div>
+                            <div class="modal-content-section" id="modal-content-summary"></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -1903,7 +2238,8 @@
             const geneKeyNodes = [
                 // 垂直中軸 (第 3 欄)
                 { id: 'personality-sun', label: '黑太陽', value: personalitySun?.gate_line || 'N/A', 
-                  color: 'green', gridRow: 1, gridCol: 3, description: 'Life\'s Work', planet: 'Sun', type: 'personality' },
+                  color: 'green', gridRow: 1, gridCol: 3, description: 'Life\'s Work', planet: 'Sun', type: 'personality', 
+                  serviceColor: 'blue' }, // 服務分類時顯示為藍色
                 { id: 'personality-jupiter', label: '黑木星', value: personalityJupiter?.gate_line || 'N/A', 
                   color: 'blue', gridRow: 2, gridCol: 3, description: 'Pearl', planet: 'Jupiter', type: 'personality' },
                 { id: 'design-venus', label: '紅金星', value: designVenus?.gate_line || 'N/A', 
@@ -1911,11 +2247,13 @@
                 { id: 'design-moon', label: '紅月亮', value: designMoon?.gate_line || 'N/A', 
                   color: 'orange', gridRow: 4, gridCol: 3, description: 'Attraction', planet: 'Moon', type: 'design' },
                 { id: 'design-earth', label: '紅地球', value: designEarth?.gate_line || 'N/A', 
-                  color: 'green', gridRow: 5, gridCol: 3, description: 'Purpose', planet: 'Earth', type: 'design' },
+                  color: 'green', gridRow: 5, gridCol: 3, description: 'Purpose', planet: 'Earth', type: 'design',
+                  relationshipColor: 'orange' }, // 關係分類時顯示為紅色
                 
                 // 中層兩側 (第 2, 4 欄)
                 { id: 'design-mars', label: '紅火星', value: designMars?.gate_line || 'N/A', 
-                  color: 'blue', gridRow: 2, gridCol: 2, description: 'Core', planet: 'Mars', type: 'design', transform: 'translate(20px, 60px)' },
+                  color: 'blue', gridRow: 2, gridCol: 2, description: 'Core', planet: 'Mars', type: 'design', transform: 'translate(20px, 60px)',
+                  relationshipColor: 'orange' }, // 關係分類時顯示為紅色
                 { id: 'design-jupiter', label: '紅木星', value: designJupiter?.gate_line || 'N/A', 
                   color: 'blue', gridRow: 2, gridCol: 4, description: 'Culture', planet: 'Jupiter', type: 'design', transform: 'translate(-20px, 60px)' },
                 { id: 'design-sun', label: '紅太陽', value: designSun?.gate_line || 'N/A', 
@@ -1935,8 +2273,6 @@
                 { from: 'personality-sun', to: 'personality-earth', color: 'green' }, // 黑太陽 → 黑地球
                 { from: 'personality-earth', to: 'design-sun', color: 'green' },   // 黑地球 → 紅太陽
                 { from: 'design-sun', to: 'personality-earth', color: 'green' },   // 紅太陽 → 黑地球
-                { from: 'personality-earth', to: 'design-earth', color: 'green' }, // 黑地球 → 紅地球
-                { from: 'design-earth', to: 'personality-earth', color: 'green' }, // 紅地球 → 黑地球
                 
                 // 2. 金星序列 (Venus Sequence) - 紅色連線
                 { from: 'personality-venus', to: 'personality-mars', color: 'red' }, // 黑金星 → 黑火星
@@ -1946,10 +2282,10 @@
                 { from: 'design-venus', to: 'personality-mars', color: 'red' },    // 紅金星 → 黑火星
                 
                 // 3. 珍珠序列 (Pearl Sequence) - 藍色連線
-                { from: 'design-venus', to: 'design-jupiter', color: 'blue' },     // 紅金星 → 紅木星
+                { from: 'design-venus', to: 'design-jupiter', color: 'blue', hideIn: 'service' },     // 紅金星 → 紅木星（服務分類時隱藏）
                 { from: 'design-jupiter', to: 'personality-jupiter', color: 'blue' }, // 紅木星 → 黑木星
                 { from: 'personality-jupiter', to: 'design-mars', color: 'blue' }, // 黑木星 → 紅火星
-                { from: 'design-mars', to: 'design-venus', color: 'blue' },        // 紅火星 → 紅金星
+                { from: 'design-mars', to: 'design-venus', color: 'blue', alsoShowIn: 'relationship', alsoShowColor: 'red', hideIn: 'service' },        // 紅火星 → 紅金星（關係分類時也顯示，服務分類時隱藏）
                 { from: 'design-mars', to: 'design-jupiter', color: 'blue' },      // 紅火星 → 紅木星
                 { from: 'personality-sun', to: 'design-mars', color: 'blue' },     // 黑太陽 → 紅火星
                 { from: 'personality-sun', to: 'design-jupiter', color: 'blue' },  // 黑太陽 → 紅木星
@@ -1985,11 +2321,33 @@
             // 創建節點並記錄位置
             const nodePositions = {};
             
+            // 根據顏色獲取分類
+            function getCategoryFromColor(color) {
+                if (color === 'green') return 'talent';      // 天賦
+                if (color === 'blue') return 'service';      // 服務
+                if (color === 'orange' || color === 'red') return 'relationship'; // 關係
+                return 'all';
+            }
+            
             geneKeyNodes.forEach(node => {
                 // 創建節點元素
                 const nodeEl = document.createElement('div');
                 nodeEl.className = `gene-key-sphere ${node.color}`;
                 nodeEl.id = `gene-key-${node.id}`;
+                
+                // 保存原始顏色、服務顏色和關係顏色（如果有）
+                nodeEl.setAttribute('data-original-color', node.color);
+                if (node.serviceColor) {
+                    nodeEl.setAttribute('data-service-color', node.serviceColor);
+                }
+                if (node.relationshipColor) {
+                    nodeEl.setAttribute('data-relationship-color', node.relationshipColor);
+                }
+                
+                // 設置分類屬性
+                const category = getCategoryFromColor(node.color);
+                nodeEl.setAttribute('data-category', category);
+                nodeEl.classList.add('show-all'); // 默認顯示
                 
                 // 設置網格位置
                 nodeEl.style.gridRow = node.gridRow;
@@ -2025,6 +2383,22 @@
                     <div class="planet-marker-zodiac">${zodiac}</div>
                 `;
                 
+                // 保存閘門編號用於點擊事件
+                nodeEl.setAttribute('data-gate-number', gate);
+                nodeEl.style.cursor = 'pointer';
+                
+                // 添加點擊事件
+                nodeEl.addEventListener('click', function() {
+                    const gateNumberStr = this.getAttribute('data-gate-number');
+                    if (gateNumberStr) {
+                        const gateNumber = parseInt(gateNumberStr);
+                        console.log('點擊圓球:', node.label, '閘門編號:', gateNumberStr, '=>', gateNumber);
+                        showGeneKeyDetail(gateNumber, node.label);
+                    } else {
+                        console.error('無法獲取閘門編號');
+                    }
+                });
+                
                 wrapper.appendChild(nodeEl);
                 
                 // 記錄節點中心位置
@@ -2058,6 +2432,9 @@
                 const svgRect = svg.getBoundingClientRect();
                 const containerWrapperRect = svgParent.getBoundingClientRect();
                 
+                // 球體半徑（用於計算線條與球體邊緣的交點）
+                const sphereRadius = 60; // 球體寬度/高度為 120px，半徑為 60px
+                
                 // 重新計算所有節點的實際中心位置（基於 DOM 元素）
                 const actualPositions = {};
                 geneKeyNodes.forEach(node => {
@@ -2079,6 +2456,28 @@
                     }
                 });
                 
+                // 計算線條與球體邊緣的交點
+                function getLineCircleIntersection(centerX, centerY, targetX, targetY, radius) {
+                    // 計算方向向量
+                    const dx = targetX - centerX;
+                    const dy = targetY - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance === 0) {
+                        return { x: centerX, y: centerY };
+                    }
+                    
+                    // 歸一化方向向量
+                    const unitX = dx / distance;
+                    const unitY = dy / distance;
+                    
+                    // 計算邊緣交點（沿著方向向量延伸半徑距離）
+                    return {
+                        x: centerX + unitX * radius,
+                        y: centerY + unitY * radius
+                    };
+                }
+                
                 // 繪製 SVG 連接線（使用 path 元素）
                 connections.forEach(conn => {
                     const fromPos = actualPositions[conn.from] || nodePositions[conn.from];
@@ -2089,11 +2488,42 @@
                         return;
                     }
                     
+                    // 計算線條與球體邊緣的交點
+                    const fromEdge = getLineCircleIntersection(
+                        fromPos.x, fromPos.y, 
+                        toPos.x, toPos.y, 
+                        sphereRadius
+                    );
+                    const toEdge = getLineCircleIntersection(
+                        toPos.x, toPos.y, 
+                        fromPos.x, fromPos.y, 
+                        sphereRadius
+                    );
+                    
                     // 創建 SVG path 元素
                     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     
-                    // 使用簡單的直線連接球體圓心
-                    const d = `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`;
+                    // 設置分類屬性
+                    const category = getCategoryFromColor(conn.color);
+                    path.setAttribute('data-category', category);
+                    path.setAttribute('data-original-color', conn.color);
+                    path.classList.add('show-all'); // 默認顯示
+                    
+                    // 如果連線也在其他分類中顯示，保存相關信息
+                    if (conn.alsoShowIn) {
+                        path.setAttribute('data-also-show-in', conn.alsoShowIn);
+                        if (conn.alsoShowColor) {
+                            path.setAttribute('data-also-show-color', conn.alsoShowColor);
+                        }
+                    }
+                    
+                    // 如果連線在某個分類中需要隱藏，保存相關信息
+                    if (conn.hideIn) {
+                        path.setAttribute('data-hide-in', conn.hideIn);
+                    }
+                    
+                    // 使用直線連接球體邊緣（而不是中心）
+                    const d = `M ${fromEdge.x} ${fromEdge.y} L ${toEdge.x} ${toEdge.y}`;
                     path.setAttribute('d', d);
                     path.setAttribute('class', `gene-key-path gene-key-path-${conn.color}`);
                     path.setAttribute('stroke', getConnectionColor(conn.color));
@@ -2178,6 +2608,470 @@
 
             // 將 drawGeneKeyLines 暴露給全域，以便其他地方可以調用
             window.redrawGeneKeyLines = drawGeneKeyLines;
+            
+            // 分類過濾功能
+            function filterGeneKeys(filterType) {
+                // 移除所有按鈕的 active 類
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // 激活當前按鈕
+                const activeBtn = document.querySelector(`.filter-btn[data-filter="${filterType}"]`);
+                if (activeBtn) {
+                    activeBtn.classList.add('active');
+                }
+                
+                // 獲取所有節點和連線
+                const allNodes = document.querySelectorAll('.gene-key-sphere[data-category]');
+                const allPaths = document.querySelectorAll('.gene-key-path[data-category]');
+                
+                if (filterType === 'all') {
+                    // 顯示全部，恢復原始顏色
+                    allNodes.forEach(node => {
+                        node.classList.remove('show-category');
+                        node.classList.add('show-all');
+                        node.style.opacity = '1';
+                        node.style.pointerEvents = 'auto';
+                        
+                        // 恢復原始顏色
+                        const originalColor = node.getAttribute('data-original-color');
+                        if (originalColor) {
+                            // 移除所有顏色類
+                            node.classList.remove('green', 'blue', 'orange', 'red');
+                            // 添加原始顏色類
+                            node.classList.add(originalColor);
+                            // 恢復原始分類
+                            const originalCategory = getCategoryFromColor(originalColor);
+                            node.setAttribute('data-category', originalCategory);
+                        }
+                    });
+                    allPaths.forEach(path => {
+                        path.classList.remove('show-category');
+                        path.classList.add('show-all');
+                        path.setAttribute('stroke-opacity', '0.5');
+                        
+                        // 恢復原始顏色
+                        const originalColor = path.getAttribute('data-original-color');
+                        if (originalColor) {
+                            path.setAttribute('stroke', getConnectionColor(originalColor));
+                        }
+                    });
+                } else {
+                    // 根據分類顯示/隱藏
+                    allNodes.forEach(node => {
+                        const category = node.getAttribute('data-category');
+                        let shouldShow = category === filterType;
+                        
+                        // 特殊處理：如果選擇「服務」分類，檢查是否有服務顏色
+                        if (filterType === 'service') {
+                            const serviceColor = node.getAttribute('data-service-color');
+                            const originalColor = node.getAttribute('data-original-color');
+                            
+                            // 如果有服務顏色（黑太陽），則在服務分類中顯示為藍色
+                            if (serviceColor) {
+                                shouldShow = true;
+                                // 移除原始顏色類
+                                node.classList.remove(originalColor);
+                                // 添加服務顏色類
+                                node.classList.remove('green', 'blue', 'orange', 'red');
+                                node.classList.add(serviceColor);
+                                // 更新分類屬性
+                                node.setAttribute('data-category', 'service');
+                            } else if (category === 'service') {
+                                // 原本就是服務分類的節點（藍色）
+                                shouldShow = true;
+                                // 確保顏色正確
+                                if (originalColor === 'blue') {
+                                    node.classList.remove('green', 'blue', 'orange', 'red');
+                                    node.classList.add('blue');
+                                }
+                            } else if (originalColor === 'blue') {
+                                // 如果原始顏色是藍色（如紅火星），即使當前分類不是 service，也要顯示
+                                shouldShow = true;
+                                // 恢復為藍色
+                                node.classList.remove('green', 'blue', 'orange', 'red');
+                                node.classList.add('blue');
+                                // 更新分類屬性
+                                node.setAttribute('data-category', 'service');
+                            } else {
+                                shouldShow = false;
+                            }
+                        } else if (filterType === 'relationship') {
+                            // 特殊處理：如果選擇「關係」分類，檢查是否有關係顏色
+                            const relationshipColor = node.getAttribute('data-relationship-color');
+                            
+                            // 如果有關係顏色（紅火星、紅地球），則在關係分類中顯示為紅色
+                            if (relationshipColor) {
+                                shouldShow = true;
+                                // 移除原始顏色類
+                                const originalColor = node.getAttribute('data-original-color');
+                                node.classList.remove(originalColor);
+                                // 添加關係顏色類
+                                node.classList.remove('green', 'blue', 'orange', 'red');
+                                node.classList.add(relationshipColor);
+                                // 更新分類屬性
+                                node.setAttribute('data-category', 'relationship');
+                            } else if (category === 'relationship') {
+                                shouldShow = true;
+                            } else {
+                                shouldShow = false;
+                            }
+                        } else {
+                            // 其他分類：恢復原始顏色（如果之前被改過）
+                            const serviceColor = node.getAttribute('data-service-color');
+                            const relationshipColor = node.getAttribute('data-relationship-color');
+                            
+                            if (serviceColor || relationshipColor) {
+                                const originalColor = node.getAttribute('data-original-color');
+                                if (originalColor) {
+                                    node.classList.remove('green', 'blue', 'orange', 'red');
+                                    node.classList.add(originalColor);
+                                    // 恢復原始分類
+                                    const originalCategory = getCategoryFromColor(originalColor);
+                                    node.setAttribute('data-category', originalCategory);
+                                }
+                            }
+                        }
+                        
+                        if (shouldShow) {
+                            node.classList.remove('show-all');
+                            node.classList.add('show-category');
+                            node.style.opacity = '1';
+                            node.style.pointerEvents = 'auto';
+                        } else {
+                            node.classList.remove('show-all', 'show-category');
+                            node.style.opacity = '0.2';
+                            node.style.pointerEvents = 'none';
+                            
+                            // 恢復原始顏色（如果之前被改過）
+                            if (filterType !== 'service' && filterType !== 'relationship') {
+                                const originalColor = node.getAttribute('data-original-color');
+                                if (originalColor) {
+                                    node.classList.remove('green', 'blue', 'orange', 'red');
+                                    node.classList.add(originalColor);
+                                    // 恢復原始分類
+                                    const originalCategory = getCategoryFromColor(originalColor);
+                                    node.setAttribute('data-category', originalCategory);
+                                }
+                            }
+                        }
+                    });
+                    
+                    allPaths.forEach(path => {
+                        const category = path.getAttribute('data-category');
+                        const alsoShowIn = path.getAttribute('data-also-show-in');
+                        const hideIn = path.getAttribute('data-hide-in');
+                        const originalColor = path.getAttribute('data-original-color');
+                        
+                        let shouldShow = category === filterType;
+                        
+                        // 檢查是否需要在當前分類中隱藏
+                        if (hideIn === filterType) {
+                            shouldShow = false;
+                        } else if (!shouldShow && alsoShowIn === filterType) {
+                            // 如果連線也在其他分類中顯示，檢查是否需要顯示
+                            shouldShow = true;
+                            // 改變顏色（如果需要）
+                            const alsoShowColor = path.getAttribute('data-also-show-color');
+                            if (alsoShowColor) {
+                                path.setAttribute('stroke', getConnectionColor(alsoShowColor));
+                            }
+                        } else if (alsoShowIn && filterType !== alsoShowIn) {
+                            // 恢復原始顏色（如果之前被改過）
+                            if (originalColor) {
+                                path.setAttribute('stroke', getConnectionColor(originalColor));
+                            }
+                        }
+                        
+                        if (shouldShow) {
+                            path.classList.remove('show-all');
+                            path.classList.add('show-category');
+                            path.setAttribute('stroke-opacity', '0.5');
+                        } else {
+                            path.classList.remove('show-all', 'show-category');
+                            path.setAttribute('stroke-opacity', '0.1');
+                        }
+                    });
+                }
+            }
+            
+            // 為所有過濾按鈕添加點擊事件
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const filterType = this.getAttribute('data-filter');
+                    filterGeneKeys(filterType);
+                });
+            });
+            
+            // 載入基因天命CSV資料
+            loadGeneKeysData();
+        }
+        
+        // 基因天命資料存儲
+        let geneKeysData = {};
+        
+        // 載入基因天命CSV資料
+        async function loadGeneKeysData() {
+            try {
+                // 嘗試多個可能的CSV文件路徑（包括URL編碼版本和Flask路由）
+                const csvPaths = [
+                    '/基因天命.csv',  // Flask路由
+                    '基因天命.csv',
+                    './基因天命.csv',
+                    encodeURI('基因天命.csv'),
+                    encodeURIComponent('基因天命.csv')
+                ];
+                
+                let text = '';
+                let loaded = false;
+                let lastError = null;
+                
+                // 嘗試每個路徑
+                for (const path of csvPaths) {
+                    try {
+                        console.log('嘗試載入CSV:', path);
+                        const response = await fetch(path, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'text/csv,text/plain,*/*'
+                            }
+                        });
+                        
+                        console.log('響應狀態:', response.status, response.statusText);
+                        
+                        if (response.ok) {
+                            text = await response.text();
+                            if (text && text.length > 0) {
+                                console.log('成功從', path, '載入CSV文件，大小:', text.length, '字符');
+                                loaded = true;
+                                break;
+                            } else {
+                                console.warn('從', path, '載入的文件為空');
+                            }
+                        } else {
+                            console.warn('從', path, '載入失敗，狀態碼:', response.status);
+                            lastError = `HTTP ${response.status}: ${response.statusText}`;
+                        }
+                    } catch (fetchError) {
+                        console.warn('無法從', path, '載入CSV:', fetchError);
+                        lastError = fetchError.message;
+                        continue;
+                    }
+                }
+                
+                if (!loaded || !text) {
+                    console.error('無法從任何路徑載入CSV文件');
+                    console.error('最後的錯誤:', lastError);
+                    console.error('請確認CSV文件是否存在於與index.html相同的目錄下');
+                    alert('無法載入基因天命資料文件。\n\n請確認：\n1. CSV文件是否存在於與index.html相同的目錄\n2. 文件名稱是否為「基因天命.csv」\n3. 服務器是否正確配置了靜態文件服務\n\n錯誤信息: ' + (lastError || '未知錯誤'));
+                    return;
+                }
+                
+                // 解析整個CSV文件（處理多行記錄）
+                const records = parseCSV(text);
+                
+                // 跳過標題行，從第3行開始解析（索引2）
+                for (let i = 2; i < records.length; i++) {
+                    const parts = records[i];
+                    if (!parts || parts.length < 9) continue;
+                    
+                    const name = parts[0]; // 例如 "基因天命1"
+                    const gateNumber = parseInt(name.replace('基因天命', ''));
+                    
+                    if (!isNaN(gateNumber) && name.startsWith('基因天命')) {
+                        geneKeysData[gateNumber] = {
+                            name: name,
+                            meaning: parts[1] || '',
+                            shadow: parts[2] || '',
+                            expression: parts[3] || '',
+                            gift: parts[4] || '',
+                            transformation: parts[5] || '',
+                            siddhi: parts[6] || '',
+                            siddhiState: parts[7] || '',
+                            summary: parts[8] || ''
+                        };
+                    }
+                }
+                
+                console.log('基因天命資料載入完成', Object.keys(geneKeysData).length, '項');
+                console.log('已載入的基因天命:', Object.keys(geneKeysData).sort((a, b) => a - b));
+            } catch (error) {
+                console.error('載入基因天命資料失敗:', error);
+                alert('載入基因天命資料失敗: ' + error.message);
+            }
+        }
+        
+        // CSV解析函數（處理引號內的多行內容）
+        function parseCSV(text) {
+            const records = [];
+            const lines = text.split('\n');
+            let currentRecord = [];
+            let currentField = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                
+                for (let j = 0; j < line.length; j++) {
+                    const char = line[j];
+                    const nextChar = line[j + 1];
+                    
+                    if (char === '"') {
+                        // 檢查是否是轉義的引號（雙引號）
+                        if (inQuotes && nextChar === '"') {
+                            currentField += '"';
+                            j++; // 跳過下一個引號
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (char === ',' && !inQuotes) {
+                        // 欄位結束
+                        currentRecord.push(currentField.trim());
+                        currentField = '';
+                    } else {
+                        currentField += char;
+                    }
+                }
+                
+                // 如果不在引號內，則行結束
+                if (!inQuotes) {
+                    // 如果當前欄位有內容，添加到記錄
+                    if (currentField || currentRecord.length > 0) {
+                        currentField = currentField.trim();
+                        if (currentField || currentRecord.length === 0) {
+                            currentRecord.push(currentField);
+                        }
+                        
+                        // 如果記錄有內容，保存並重置
+                        if (currentRecord.length > 0 && currentRecord[0]) {
+                            records.push(currentRecord);
+                        }
+                        
+                        currentRecord = [];
+                        currentField = '';
+                    }
+                } else {
+                    // 在引號內，添加換行符
+                    currentField += '\n';
+                }
+            }
+            
+            // 處理最後一個記錄
+            if (currentField || currentRecord.length > 0) {
+                currentRecord.push(currentField.trim());
+                if (currentRecord.length > 0 && currentRecord[0]) {
+                    records.push(currentRecord);
+                }
+            }
+            
+            return records;
+        }
+        
+        // 顯示基因天命詳細資訊
+        function showGeneKeyDetail(gateNumber, label) {
+            console.log('尋找基因天命:', gateNumber);
+            console.log('已載入的資料:', Object.keys(geneKeysData));
+            const data = geneKeysData[gateNumber];
+            if (!data) {
+                console.error('找不到基因天命資料:', gateNumber, '可用編號:', Object.keys(geneKeysData).sort((a, b) => a - b));
+                alert(`找不到基因天命 ${gateNumber} 的資料\n\n已載入的基因天命: ${Object.keys(geneKeysData).sort((a, b) => a - b).join(', ')}`);
+                return;
+            }
+            
+            const modal = document.getElementById('gene-key-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalGateNumber = document.getElementById('modal-gate-number');
+            
+            // 設置標題和閘門編號
+            modalTitle.textContent = `${label} - ${data.name}`;
+            modalGateNumber.textContent = gateNumber;
+            
+            // 設置各分類內容
+            document.getElementById('modal-content-meaning').innerHTML = `<h3>意義</h3><p>${formatContent(data.meaning)}</p>`;
+            document.getElementById('modal-content-shadow').innerHTML = `<h3>陰影</h3><p>${formatContent(data.shadow)}</p>`;
+            document.getElementById('modal-content-expression').innerHTML = `<h3>表現形式</h3><p>${formatContent(data.expression)}</p>`;
+            document.getElementById('modal-content-gift').innerHTML = `<h3>天賦</h3><p>${formatContent(data.gift)}</p>`;
+            document.getElementById('modal-content-transformation').innerHTML = `<h3>轉化過程</h3><p>${formatContent(data.transformation)}</p>`;
+            document.getElementById('modal-content-siddhi').innerHTML = `<h3>神聖才能</h3><p>${formatContent(data.siddhi)}</p>`;
+            document.getElementById('modal-content-siddhi-state').innerHTML = `<h3>最終狀態</h3><p>${formatContent(data.siddhiState)}</p>`;
+            document.getElementById('modal-content-summary').innerHTML = `<h3>綜合意義</h3><p>${formatContent(data.summary)}</p>`;
+            
+            // 顯示彈窗
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // 設置第一個分類為活動狀態
+            switchModalSection('meaning');
+        }
+        
+        // 格式化內容（將換行轉換為HTML）
+        function formatContent(text) {
+            if (!text) return '無資料';
+            return text
+                .replace(/\n/g, '<br>')
+                .replace(/^\d+\.\s*/gm, '<strong>$&</strong>'); // 將編號加粗
+        }
+        
+        // 切換彈窗分類
+        function switchModalSection(section) {
+            // 移除所有活動狀態
+            document.querySelectorAll('.modal-nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelectorAll('.modal-content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 設置活動狀態
+            document.querySelector(`.modal-nav-btn[data-section="${section}"]`).classList.add('active');
+            document.getElementById(`modal-content-${section}`).classList.add('active');
+        }
+        
+        // 初始化彈窗事件監聽（延遲執行以確保DOM已準備好）
+        function initGeneKeyModal() {
+            // 關閉按鈕
+            const closeBtn = document.querySelector('.gene-key-modal-close');
+            const modal = document.getElementById('gene-key-modal');
+            const overlay = document.querySelector('.gene-key-modal-overlay');
+            
+            if (closeBtn && !closeBtn.hasAttribute('data-initialized')) {
+                closeBtn.setAttribute('data-initialized', 'true');
+                closeBtn.addEventListener('click', function() {
+                    if (modal) {
+                        modal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+            
+            if (overlay && !overlay.hasAttribute('data-initialized')) {
+                overlay.setAttribute('data-initialized', 'true');
+                overlay.addEventListener('click', function() {
+                    if (modal) {
+                        modal.style.display = 'none';
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+            
+            // 分類切換按鈕（使用事件委派）
+            if (modal && !modal.hasAttribute('data-nav-initialized')) {
+                modal.setAttribute('data-nav-initialized', 'true');
+                modal.addEventListener('click', function(e) {
+                    if (e.target.classList.contains('modal-nav-btn')) {
+                        const section = e.target.getAttribute('data-section');
+                        switchModalSection(section);
+                    }
+                });
+            }
+        }
+        
+        // 在DOM載入完成後初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initGeneKeyModal);
+        } else {
+            initGeneKeyModal();
         }
 
         // 渲染文字結果（已移除）
