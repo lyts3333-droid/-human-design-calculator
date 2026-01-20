@@ -2815,12 +2815,14 @@
         async function loadGeneKeysData() {
             try {
                 // 嘗試多個可能的CSV文件路徑（包括URL編碼版本和Flask路由）
+                // 注意：在Vercel上，文件應該與index.html在同一目錄
                 const csvPaths = [
-                    '/基因天命.csv',  // Flask路由
-                    '基因天命.csv',
-                    './基因天命.csv',
+                    '/基因天命.csv',  // 絕對路徑（Vercel根目錄）
+                    './基因天命.csv',  // 相對路徑
+                    '基因天命.csv',    // 當前目錄
+                    '/人類圖/基因天命.csv',  // 如果有子目錄
                     encodeURI('基因天命.csv'),
-                    encodeURIComponent('基因天命.csv')
+                    encodeURI('基因天命.csv').replace(/%/g, '%25'),  // 雙重編碼
                 ];
                 
                 let text = '';
