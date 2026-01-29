@@ -1,49 +1,77 @@
 @echo off
 chcp 65001 >nul
-setlocal enabledelayedexpansion
 echo ========================================
-echo   更新到 GitHub
+echo   更新 index.html 並推送到 GitHub
 echo ========================================
 echo.
 
+REM 切換到項目目錄
 cd /d "%~dp0"
 echo 當前目錄：%CD%
 echo.
 
-echo [步驟 1] 添加所有更改...
-git add .
+REM 檢查是否已經初始化 Git
+if not exist ".git" (
+    echo [步驟 0] 初始化 Git repository...
+    git init
+    echo [完成] Git repository 已初始化
+    echo.
+)
+
+REM 檢查 Git 狀態
+echo [步驟 1] 檢查 Git 狀態...
+git status
+echo.
+
+REM 添加更改的文件
+echo [步驟 2] 添加 index.html...
+git add index.html
+echo [完成] index.html 已添加到暫存區
+echo.
+
+REM 檢查是否有遠程倉庫
+git remote -v
 if errorlevel 1 (
-    echo [錯誤] Git add 失敗
+    echo.
+    echo [提示] 尚未設置 GitHub 遠程倉庫
+    echo 請先執行以下命令（替換 YOUR_USERNAME 和 YOUR_REPO_NAME）：
+    echo git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+    echo.
     pause
     exit /b 1
 )
-echo [完成] 所有文件已添加
-echo.
 
-echo [步驟 2] 提交更改...
-set commit_msg=修復基因天命圓球hover效果和點擊功能 - 確保紅火星、紅木星、黑金星、黑火星也有浮起效果
-git commit -m "!commit_msg!"
+REM 提交更改
+echo [步驟 3] 提交更改...
+set /p commit_msg="請輸入提交訊息（直接按 Enter 使用預設訊息）: "
+if "!commit_msg!"=="" set commit_msg="Update: Fix mobile scrolling and layout improvements"
+
+git commit -m "%commit_msg%"
 if errorlevel 1 (
-    echo [警告] 沒有需要提交的更改，或提交失敗
+    echo [警告] 可能沒有新的更改需要提交
     echo.
 ) else (
     echo [完成] 更改已提交
     echo.
 )
 
-echo [步驟 3] 推送到 GitHub...
-git push origin main
+REM 推送到 GitHub
+echo [步驟 4] 推送到 GitHub...
+git branch --show-current
+set /p branch="請確認分支名稱（直接按 Enter 使用 main）: "
+if "!branch!"=="" set branch=main
+
+git push origin %branch%
 if errorlevel 1 (
     echo.
-    echo [錯誤] 推送失敗！
-    echo.
+    echo [錯誤] 推送失敗
     echo 可能原因：
-    echo   1. 網絡連接問題
-    echo   2. GitHub 權限問題
-    echo   3. 遠程倉庫未正確設置
+    echo   1. 遠程倉庫尚未創建
+    echo   2. 分支名稱不正確
+    echo   3. 需要先執行：git push -u origin %branch%
     echo.
-    echo [檢查] 遠程倉庫設置：
-    git remote -v
+    echo [建議] 如果是第一次推送，請執行：
+    echo git push -u origin %branch%
     echo.
     pause
     exit /b 1
@@ -51,14 +79,12 @@ if errorlevel 1 (
 
 echo.
 echo ========================================
-echo   [完成] 已成功推送到 GitHub！
+echo   完成！
 echo ========================================
 echo.
-echo [下一步] Vercel 會自動部署更新
-echo.
-echo 1. 等待 1-3 分鐘讓 Vercel 完成部署
-echo 2. 前往 Vercel Dashboard 查看部署狀態：
-echo    https://vercel.com/dashboard
-echo 3. 清除瀏覽器快取（Ctrl+Shift+R）後重新載入網頁
+echo index.html 已更新並推送到 GitHub
 echo.
 pause
+
+
+
