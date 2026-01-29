@@ -1219,6 +1219,12 @@ def index():
     return send_from_directory('.', 'index.html')
 
 
+@app.route('/基因天命.csv')
+def gene_keys_csv():
+    """提供基因天命 CSV 文件"""
+    return send_from_directory('.', '基因天命.csv', mimetype='text/csv; charset=utf-8')
+
+
 @app.route('/calculate_hd', methods=['POST'])
 def calculate_human_design_api():
     """
