@@ -2838,24 +2838,6 @@
                 // 仍然顯示面板，但顯示錯誤訊息
                 panel.classList.remove('hidden');
             }
-            } catch (error) {
-                console.error('載入基因天命數據失敗:', error);
-                
-                // 顯示錯誤訊息
-                const contentBody = document.getElementById('detail-content-body');
-                if (contentBody) {
-                    contentBody.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: #dc3545;">
-                            <h3>載入失敗</h3>
-                            <p>${error.message || '無法載入基因天命數據'}</p>
-                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">請稍後再試</p>
-                        </div>
-                    `;
-                }
-                
-                // 仍然顯示面板，但顯示錯誤訊息
-                panel.classList.remove('hidden');
-            }
         }
 
         // 切換標籤頁
