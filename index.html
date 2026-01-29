@@ -2708,128 +2708,154 @@
             return rows;
         }
 
-        // 解析CSV數據（改進版，處理多行字段）
+        // 從 API 載入基因天命數據（已改為使用後端 API）
         async function loadGeneKeysData() {
-            try {
-                const response = await fetch('基因天命.csv');
-                const text = await response.text();
-                
-                // 使用更智能的CSV解析
-                const rows = parseCSV(text);
-                
-                // 跳過標題行（第1行，索引0）和列名行（第2行，索引1）
-                for (let i = 2; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row || row.length < 9) continue;
-                    
-                    const name = row[0] || '';
-                    const number = parseInt(name.replace('基因天命', ''));
-                    
-                    if (number >= 1 && number <= 64) {
-                        geneKeysData[number] = {
-                            name: name,
-                            meaning: row[1] || '',
-                            shadow: row[2] || '',
-                            manifestation: row[3] || '',
-                            gift: row[4] || '',
-                            transformation: row[5] || '',
-                            siddhi: row[6] || '',
-                            finalState: row[7] || '',
-                            synthesis: row[8] || ''
-                        };
-                    }
-                }
-                console.log('基因天命數據已加載:', Object.keys(geneKeysData).length, '個');
-            } catch (error) {
-                console.error('加載基因天命數據失敗:', error);
-            }
+            // 此函數保留用於向後兼容，但現在數據從 API 動態獲取
+            console.log('基因天命數據將從 API 動態獲取');
         }
 
         // 顯示基因天命說明面板（全局作用域，確保在 renderGeneKeys 之前定義）
-        function showGeneKeyDetail(number, color = 'orange') {
-            if (!geneKeysData[number]) {
-                console.warn('找不到基因天命', number, '的數據');
-                return;
-            }
-
-            currentGeneKeyNumber = number;
-            const data = geneKeysData[number];
+        async function showGeneKeyDetail(number, color = 'orange') {
             const panel = document.getElementById('gene-key-detail-panel');
             
             if (!panel) {
                 console.error('找不到說明面板元素');
                 return;
             }
-
-            // 更新標題和徽章
-            const badge = document.getElementById('detail-badge');
-            const badgeNumber = document.getElementById('detail-badge-number');
-            badgeNumber.textContent = number;
-            document.getElementById('detail-title').textContent = data.name;
             
-            // 根據球體顏色更新徽章樣式
-            let badgeGradient = '';
-            let badgeShadow = '';
-            
-            if (color === 'green') {
-                // 啟動序列 - 綠色
-                badgeGradient = 'linear-gradient(135deg, #76a07b 0%, #2d4d32 100%)';
-                badgeShadow = '0 4px 12px rgba(118, 160, 123, 0.3)';
-            } else if (color === 'blue') {
-                // 珍珠序列 - 寶藍色
-                badgeGradient = 'linear-gradient(135deg, #3498db 0%, #21618c 100%)';
-                badgeShadow = '0 4px 12px rgba(52, 152, 219, 0.3)';
-            } else {
-                // 金星序列 - 深紅/酒紅色（默認）
-                badgeGradient = 'linear-gradient(135deg, #c0392b 0%, #8b2635 100%)';
-                badgeShadow = '0 4px 12px rgba(192, 57, 43, 0.3)';
+            // 顯示載入狀態
+            panel.classList.remove('hidden');
+            const contentBody = document.getElementById('detail-content-body');
+            if (contentBody) {
+                contentBody.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;">載入中...</div>';
             }
             
-            badge.style.background = badgeGradient;
-            badge.style.boxShadow = badgeShadow;
+            // 從 API 獲取數據
+            try {
+                const response = await fetch(`/api/gene_key/${number}`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('找不到該基因天命的數據');
+                    }
+                    throw new Error(`HTTP 錯誤: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // 檢查是否有錯誤
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                currentGeneKeyNumber = number;
 
-            // 更新內容（所有分類）
-            const contentBody = document.getElementById('detail-content-body');
-            contentBody.innerHTML = `
-                <div class="detail-section active" data-tab="meaning">
-                    <div class="detail-section-title">意義</div>
-                    <div class="detail-section-content">${formatText(data.meaning)}</div>
-                </div>
-                <div class="detail-section" data-tab="shadow">
-                    <div class="detail-section-title">陰影</div>
-                    <div class="detail-section-content">${formatText(data.shadow)}</div>
-                </div>
-                <div class="detail-section" data-tab="manifestation">
-                    <div class="detail-section-title">表現形式</div>
-                    <div class="detail-section-content">${formatText(data.manifestation)}</div>
-                </div>
-                <div class="detail-section" data-tab="gift">
-                    <div class="detail-section-title">天賦</div>
-                    <div class="detail-section-content">${formatText(data.gift)}</div>
-                </div>
-                <div class="detail-section" data-tab="transformation">
-                    <div class="detail-section-title">轉化過程</div>
-                    <div class="detail-section-content">${formatText(data.transformation)}</div>
-                </div>
-                <div class="detail-section" data-tab="siddhi">
-                    <div class="detail-section-title">神聖才能</div>
-                    <div class="detail-section-content">${formatText(data.siddhi)}</div>
-                </div>
-                <div class="detail-section" data-tab="finalState">
-                    <div class="detail-section-title">最終狀態</div>
-                    <div class="detail-section-content">${formatText(data.finalState)}</div>
-                </div>
-                <div class="detail-section" data-tab="synthesis">
-                    <div class="detail-section-title">綜合意義</div>
-                    <div class="detail-section-content">${formatText(data.synthesis)}</div>
-                </div>
-            `;
+                // 更新標題和徽章
+                const badge = document.getElementById('detail-badge');
+                const badgeNumber = document.getElementById('detail-badge-number');
+                badgeNumber.textContent = number;
+                document.getElementById('detail-title').textContent = data.name;
+                
+                // 根據球體顏色更新徽章樣式
+                let badgeGradient = '';
+                let badgeShadow = '';
+                
+                if (color === 'green') {
+                    // 啟動序列 - 綠色
+                    badgeGradient = 'linear-gradient(135deg, #76a07b 0%, #2d4d32 100%)';
+                    badgeShadow = '0 4px 12px rgba(118, 160, 123, 0.3)';
+                } else if (color === 'blue') {
+                    // 珍珠序列 - 寶藍色
+                    badgeGradient = 'linear-gradient(135deg, #3498db 0%, #21618c 100%)';
+                    badgeShadow = '0 4px 12px rgba(52, 152, 219, 0.3)';
+                } else {
+                    // 金星序列 - 深紅/酒紅色（默認）
+                    badgeGradient = 'linear-gradient(135deg, #c0392b 0%, #8b2635 100%)';
+                    badgeShadow = '0 4px 12px rgba(192, 57, 43, 0.3)';
+                }
+                
+                badge.style.background = badgeGradient;
+                badge.style.boxShadow = badgeShadow;
 
-            // 重置標籤頁狀態（默認顯示"意義"）
-            switchTab('meaning');
+                // 更新內容（所有分類）
+                const contentBody = document.getElementById('detail-content-body');
+                contentBody.innerHTML = `
+                    <div class="detail-section active" data-tab="meaning">
+                        <div class="detail-section-title">意義</div>
+                        <div class="detail-section-content">${formatText(data.meaning)}</div>
+                    </div>
+                    <div class="detail-section" data-tab="shadow">
+                        <div class="detail-section-title">陰影</div>
+                        <div class="detail-section-content">${formatText(data.shadow)}</div>
+                    </div>
+                    <div class="detail-section" data-tab="manifestation">
+                        <div class="detail-section-title">表現形式</div>
+                        <div class="detail-section-content">${formatText(data.manifestation)}</div>
+                    </div>
+                    <div class="detail-section" data-tab="gift">
+                        <div class="detail-section-title">天賦</div>
+                        <div class="detail-section-content">${formatText(data.gift)}</div>
+                    </div>
+                    <div class="detail-section" data-tab="transformation">
+                        <div class="detail-section-title">轉化過程</div>
+                        <div class="detail-section-content">${formatText(data.transformation)}</div>
+                    </div>
+                    <div class="detail-section" data-tab="siddhi">
+                        <div class="detail-section-title">神聖才能</div>
+                        <div class="detail-section-content">${formatText(data.siddhi)}</div>
+                    </div>
+                    <div class="detail-section" data-tab="finalState">
+                        <div class="detail-section-title">最終狀態</div>
+                        <div class="detail-section-content">${formatText(data.finalState)}</div>
+                    </div>
+                    <div class="detail-section" data-tab="synthesis">
+                        <div class="detail-section-title">綜合意義</div>
+                        <div class="detail-section-content">${formatText(data.synthesis)}</div>
+                    </div>
+                `;
 
-            // 顯示面板
-            panel.classList.remove('hidden');
+                // 重置標籤頁狀態（默認顯示"意義"）
+                switchTab('meaning');
+
+                // 顯示面板
+                panel.classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('載入基因天命數據失敗:', error);
+                
+                // 顯示錯誤訊息
+                const contentBody = document.getElementById('detail-content-body');
+                if (contentBody) {
+                    contentBody.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #dc3545;">
+                            <h3>載入失敗</h3>
+                            <p>${error.message || '無法載入基因天命數據'}</p>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">請稍後再試</p>
+                        </div>
+                    `;
+                }
+                
+                // 仍然顯示面板，但顯示錯誤訊息
+                panel.classList.remove('hidden');
+            }
+            } catch (error) {
+                console.error('載入基因天命數據失敗:', error);
+                
+                // 顯示錯誤訊息
+                const contentBody = document.getElementById('detail-content-body');
+                if (contentBody) {
+                    contentBody.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: #dc3545;">
+                            <h3>載入失敗</h3>
+                            <p>${error.message || '無法載入基因天命數據'}</p>
+                            <p style="font-size: 0.9em; color: #666; margin-top: 10px;">請稍後再試</p>
+                        </div>
+                    `;
+                }
+                
+                // 仍然顯示面板，但顯示錯誤訊息
+                panel.classList.remove('hidden');
+            }
         }
 
         // 切換標籤頁

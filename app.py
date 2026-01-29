@@ -13,6 +13,7 @@ from typing import Dict, Tuple, List, Optional
 import swisseph as swe
 import pytz
 import os
+import pandas as pd
 
 app = Flask(__name__, static_folder='.')
 CORS(app)  # 啟用 CORS，允許跨域請求
@@ -1219,10 +1220,86 @@ def index():
     return send_from_directory('.', 'index.html')
 
 
-@app.route('/基因天命.csv')
+@app.route('/gene_keys.csv')
 def gene_keys_csv():
     """提供基因天命 CSV 文件"""
-    return send_from_directory('.', '基因天命.csv', mimetype='text/csv; charset=utf-8')
+    return send_from_directory('.', 'gene_keys.csv', mimetype='text/csv; charset=utf-8')
+
+
+# ==================== 基因天命數據讀取 ====================
+# 讀取 CSV 文件並緩存數據
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, 'gene_keys.csv')
+_gene_keys_cache = None
+
+
+def load_gene_keys_data():
+    """載入基因天命 CSV 數據（使用緩存）"""
+    global _gene_keys_cache
+    
+    if _gene_keys_cache is not None:
+        return _gene_keys_cache
+    
+    try:
+        if not os.path.exists(CSV_PATH):
+            print(f"[WARNING] CSV 文件不存在: {CSV_PATH}")
+            return {}
+        
+        # 讀取 CSV，跳過第一行（標題行），使用第二行作為列名
+        df = pd.read_csv(CSV_PATH, encoding='utf-8-sig', skiprows=1)
+        
+        # 將數據轉換為字典格式，以閘門數字為鍵
+        gene_keys_dict = {}
+        
+        for _, row in df.iterrows():
+            # 從「名稱」欄位提取閘門數字（例如：基因天命36 -> 36）
+            name = str(row.get('名稱', ''))
+            if '基因天命' in name:
+                try:
+                    # 提取數字部分
+                    gate_num = int(name.replace('基因天命', '').strip())
+                    
+                    # 構建數據字典
+                    gene_keys_dict[gate_num] = {
+                        'name': name,
+                        'meaning': str(row.get('意義', '')),
+                        'shadow': str(row.get('陰影', '')),
+                        'manifestation': str(row.get('表現形式', '')),
+                        'gift': str(row.get('天賦', '')),
+                        'transformation': str(row.get('轉化過程', '')),
+                        'siddhi': str(row.get('神聖才能', '')),
+                        'finalState': str(row.get('最終狀態', '')),
+                        'synthesis': str(row.get('綜合意義', ''))
+                    }
+                except (ValueError, AttributeError) as e:
+                    print(f"[WARNING] 無法解析閘門數字: {name}, 錯誤: {e}")
+                    continue
+        
+        _gene_keys_cache = gene_keys_dict
+        print(f"[INFO] ✓ 基因天命數據已載入，共 {len(gene_keys_dict)} 個閘門")
+        return gene_keys_dict
+        
+    except Exception as e:
+        print(f"[ERROR] 讀取基因天命 CSV 失敗: {e}")
+        return {}
+
+
+@app.route('/api/gene_key/<int:gate>', methods=['GET'])
+def get_gene_key(gate):
+    """查詢指定閘門的基因天命數據"""
+    try:
+        # 載入數據（使用緩存）
+        gene_keys_data = load_gene_keys_data()
+        
+        # 查找對應的閘門數據
+        if gate in gene_keys_data:
+            return jsonify(gene_keys_data[gate])
+        else:
+            return jsonify({"error": "Data not found"}), 404
+            
+    except Exception as e:
+        print(f"[ERROR] 查詢基因天命數據失敗: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route('/calculate_hd', methods=['POST'])
