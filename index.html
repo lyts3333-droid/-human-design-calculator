@@ -1345,7 +1345,7 @@
                 min-height: auto;
                 padding: 15px 5px;
                 overflow-x: auto !important; /* Android 滾動修正 */
-                overflow-y: hidden !important; /* 只允許橫向滾動 */
+                overflow-y: auto !important; /* 允許垂直滾動以查看所有內容 */
                 -webkit-overflow-scrolling: touch; /* iOS 平滑滾動 */
                 scrollbar-width: thin; /* Firefox */
                 display: block !important; /* 確保容器佔滿寬度以便觸發捲軸 */
@@ -1382,7 +1382,8 @@
 
             .gene-keys-container-wrapper {
                 width: 1020px !important; /* 900px 內容 + 左右各 60px padding */
-                height: 900px !important;
+                min-height: 900px !important; /* 改為 min-height 以允許內容擴展 */
+                height: auto !important; /* 允許高度自動調整 */
                 margin: 0 !important;
                 position: relative;
                 touch-action: pan-x pan-y pinch-zoom !important; /* 允許平移和縮放 */
@@ -3154,75 +3155,138 @@
                 }
             }
             
-            // 繪製 SVG 連接線的函數
+            // 繪製 SVG 連接線的函數（優化版本）
             function drawGeneKeyLines() {
-                // 清除之前的連線
-                svg.innerHTML = '';
-                
-                // 獲取 containerWrapper 元素（通過查找包含 SVG 的父元素）
-                const svgParent = svg.parentElement;
-                if (!svgParent) {
-                    console.warn('找不到 SVG 的父元素');
-                    return;
-                }
-                
-                // 獲取 SVG 的實際位置（考慮滾動和變換）
-                const svgRect = svg.getBoundingClientRect();
-                const containerWrapperRect = svgParent.getBoundingClientRect();
-                
-                // 重新計算所有節點的實際中心位置（基於 DOM 元素）
-                const actualPositions = {};
-                geneKeyNodes.forEach(node => {
-                    const nodeEl = document.getElementById(`gene-key-${node.id}`);
-                    if (nodeEl && svgParent) {
-                        const nodeRect = nodeEl.getBoundingClientRect();
-                        // 計算相對於 SVG 的座標（球體圓心）
-                        // 使用 SVG 的實際位置作為參考，確保手機版滾動時位置正確
-                        const relativeX = nodeRect.left - svgRect.left + nodeRect.width / 2;
-                        const relativeY = nodeRect.top - svgRect.top + nodeRect.height / 2;
-                        
-                        actualPositions[node.id] = {
-                            x: relativeX,
-                            y: relativeY
-                        };
-                    } else {
-                        // 如果 DOM 還沒渲染，使用計算的座標
-                        actualPositions[node.id] = nodePositions[node.id];
-                    }
-                });
-                
-                // 繪製 SVG 連接線（使用 path 元素）
-                connections.forEach(conn => {
-                    const fromPos = actualPositions[conn.from] || nodePositions[conn.from];
-                    const toPos = actualPositions[conn.to] || nodePositions[conn.to];
+                // 使用 requestAnimationFrame 優化性能
+                requestAnimationFrame(() => {
+                    // 清除之前的連線
+                    svg.innerHTML = '';
                     
-                    if (!fromPos || !toPos) {
-                        console.warn(`找不到節點位置: ${conn.from} -> ${conn.to}`);
+                    // 獲取 containerWrapper 元素（通過查找包含 SVG 的父元素）
+                    const svgParent = svg.parentElement;
+                    if (!svgParent) {
+                        console.warn('找不到 SVG 的父元素');
                         return;
                     }
                     
-                    // 創建 SVG path 元素
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    // 獲取 SVG 和父容器的實際位置和尺寸
+                    const svgRect = svg.getBoundingClientRect();
+                    const svgParentRect = svgParent.getBoundingClientRect();
                     
-                    // 使用簡單的直線連接球體圓心
-                    const d = `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`;
-                    path.setAttribute('d', d);
-                    path.setAttribute('class', `gene-key-path gene-key-path-${conn.color}`);
+                    // 獲取實際的 SVG 尺寸（考慮縮放）
+                    const svgWidth = svgRect.width || 900;
+                    const svgHeight = svgRect.height || 900;
                     
-                    // 設置序列屬性（用於過濾）
-                    if (conn.sequence) {
-                        path.setAttribute('data-sequence', conn.sequence);
+                    // 計算縮放比例（考慮瀏覽器縮放和 CSS transform）
+                    const scaleX = svgWidth / 900; // 基準寬度是 900px
+                    const scaleY = svgHeight / 900; // 基準高度是 900px
+                    
+                    // 確保 SVG 有正確的視口尺寸和 viewBox
+                    svg.setAttribute('viewBox', `0 0 900 900`);
+                    svg.setAttribute('width', svgWidth);
+                    svg.setAttribute('height', svgHeight);
+                    svg.setAttribute('preserveAspectRatio', 'none'); // 允許非等比縮放
+                    
+                    // 重新計算所有節點的實際中心位置（基於 DOM 元素）
+                    const actualPositions = {};
+                    let allNodesReady = true;
+                    
+                    geneKeyNodes.forEach(node => {
+                        const nodeEl = document.getElementById(`gene-key-${node.id}`);
+                        if (nodeEl && svgParent) {
+                            // 獲取節點的實際位置（考慮所有變換）
+                            const nodeRect = nodeEl.getBoundingClientRect();
+                            
+                            // 計算相對於 SVG 父容器的座標（球體圓心）
+                            // 使用 SVG 父容器的左上角作為原點
+                            let relativeX = nodeRect.left - svgParentRect.left + nodeRect.width / 2;
+                            let relativeY = nodeRect.top - svgParentRect.top + nodeRect.height / 2;
+                            
+                            // 獲取 SVG 父容器的實際尺寸（考慮縮放）
+                            const parentWidth = svgParentRect.width || 900;
+                            const parentHeight = svgParentRect.height || 900;
+                            
+                            // 將實際像素座標轉換到 SVG 的 viewBox 座標系統（0-900）
+                            // 這樣無論如何縮放，座標都會正確對應
+                            relativeX = (relativeX / parentWidth) * 900;
+                            relativeY = (relativeY / parentHeight) * 900;
+                            
+                            // 驗證位置是否有效（允許負值，因為可能會有 transform）
+                            if (!isNaN(relativeX) && !isNaN(relativeY) && 
+                                isFinite(relativeX) && isFinite(relativeY)) {
+                                actualPositions[node.id] = {
+                                    x: Math.round(relativeX * 100) / 100, // 四捨五入到小數點後兩位
+                                    y: Math.round(relativeY * 100) / 100
+                                };
+                            } else {
+                                // 如果位置無效，使用預設位置
+                                actualPositions[node.id] = nodePositions[node.id];
+                                allNodesReady = false;
+                            }
+                        } else {
+                            // 如果 DOM 還沒渲染，使用計算的座標
+                            actualPositions[node.id] = nodePositions[node.id];
+                            allNodesReady = false;
+                        }
+                    });
+                    
+                    // 如果節點還沒完全渲染，延遲重試
+                    if (!allNodesReady) {
+                        setTimeout(() => {
+                            drawGeneKeyLines();
+                        }, 100);
+                        return;
                     }
                     
-                    path.setAttribute('stroke', getConnectionColor(conn.color));
-                    path.setAttribute('stroke-width', '4');
-                    path.setAttribute('stroke-opacity', '0.5');
-                    path.setAttribute('fill', 'none');
+                    // 繪製 SVG 連接線（使用 path 元素）
+                    let drawnCount = 0;
+                    connections.forEach(conn => {
+                        const fromPos = actualPositions[conn.from];
+                        const toPos = actualPositions[conn.to];
+                        
+                        if (!fromPos || !toPos) {
+                            console.warn(`找不到節點位置: ${conn.from} -> ${conn.to}`);
+                            return;
+                        }
+                        
+                        // 檢查當前過濾狀態，決定是否繪製此連線
+                        if (currentFilterSequence !== 'all' && conn.sequence !== currentFilterSequence) {
+                            // 如果當前有過濾且此連線不匹配，跳過繪製
+                            return;
+                        }
+                        
+                        // 驗證位置是否有效
+                        if (isNaN(fromPos.x) || isNaN(fromPos.y) || isNaN(toPos.x) || isNaN(toPos.y)) {
+                            console.warn(`無效的節點位置: ${conn.from} -> ${conn.to}`);
+                            return;
+                        }
+                        
+                        // 創建 SVG path 元素
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        
+                        // 使用簡單的直線連接球體圓心
+                        const d = `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`;
+                        path.setAttribute('d', d);
+                        path.setAttribute('class', `gene-key-path gene-key-path-${conn.color}`);
+                        
+                        // 設置序列屬性（用於過濾）
+                        if (conn.sequence) {
+                            path.setAttribute('data-sequence', conn.sequence);
+                        }
+                        
+                        path.setAttribute('stroke', getConnectionColor(conn.color));
+                        path.setAttribute('stroke-width', '4');
+                        path.setAttribute('stroke-opacity', '0.5');
+                        path.setAttribute('fill', 'none');
+                        
+                        svg.appendChild(path);
+                        drawnCount++;
+                    });
                     
-                    svg.appendChild(path);
+                    if (drawnCount > 0) {
+                        console.log('已繪製', drawnCount, '條連接線');
+                    }
                 });
-                
-                console.log('已繪製', connections.length, '條連接線');
             }
             
             // 將 SVG 和 wrapper 放入容器
@@ -3249,9 +3313,19 @@
             section.style.display = 'block';
             
             // 在所有節點渲染完成後繪製連線（延遲更長以確保 DOM 完全渲染）
+            // 使用多個延遲確保所有元素都已渲染
             setTimeout(() => {
                 drawGeneKeyLines();
-            }, 200);
+            }, 300);
+            
+            // 備用：如果第一次繪製失敗，再次嘗試
+            setTimeout(() => {
+                const paths = svg.querySelectorAll('path');
+                if (paths.length === 0) {
+                    console.log('連線未繪製，重新嘗試...');
+                    drawGeneKeyLines();
+                }
+            }, 600);
 
             // 監聽視窗大小變化和滾動事件，重新繪製連線
             let resizeTimeout;
@@ -3260,21 +3334,29 @@
             const handleResize = () => {
                 clearTimeout(resizeTimeout);
                 resizeTimeout = setTimeout(() => {
-                    // 重新繪製連線（尺寸始終是 900px，不需要調整）
+                    // 重新繪製連線（延遲更長以確保布局穩定）
                     drawGeneKeyLines();
                     console.log('視窗大小改變，重新繪製連線');
-                }, 200);
+                }, 300);
             };
             
-            // 監聽滾動事件（手機版需要）
+            // 監聽滾動事件（手機版需要，使用防抖優化）
+            let isScrolling = false;
             const handleScroll = () => {
+                if (isScrolling) return;
+                
                 clearTimeout(scrollTimeout);
                 scrollTimeout = setTimeout(() => {
                     // 手機版滾動時重新計算連線位置
                     if (window.innerWidth <= 768) {
+                        isScrolling = true;
                         drawGeneKeyLines();
+                        // 滾動結束後重置標記
+                        setTimeout(() => {
+                            isScrolling = false;
+                        }, 200);
                     }
-                }, 100);
+                }, 150);
             };
 
             // 添加 resize 事件監聽器
@@ -3296,12 +3378,34 @@
 
             // 監聽縮放事件（當用戶縮放時重新繪製連線）
             let lastZoomLevel = window.devicePixelRatio || 1;
+            let lastViewportScale = 1;
+            
             const checkZoom = () => {
+                // 檢查瀏覽器縮放
                 const currentZoom = window.devicePixelRatio || 1;
+                let zoomChanged = false;
+                
+                // 檢查視覺視口縮放（如果支援）
+                if (window.visualViewport) {
+                    const currentScale = window.visualViewport.scale || 1;
+                    if (Math.abs(currentScale - lastViewportScale) > 0.01) {
+                        lastViewportScale = currentScale;
+                        zoomChanged = true;
+                    }
+                }
+                
+                // 檢查設備像素比變化
                 if (Math.abs(currentZoom - lastZoomLevel) > 0.1) {
                     lastZoomLevel = currentZoom;
-                    drawGeneKeyLines();
-                    console.log('檢測到縮放變化，重新繪製連線');
+                    zoomChanged = true;
+                }
+                
+                if (zoomChanged) {
+                    // 延遲重繪以確保布局穩定
+                    setTimeout(() => {
+                        drawGeneKeyLines();
+                        console.log('檢測到縮放變化，重新繪製連線');
+                    }, 150);
                 }
             };
             
@@ -3313,18 +3417,51 @@
                         checkZoom();
                     }, 100);
                 });
+                
+                window.visualViewport.addEventListener('scroll', () => {
+                    // 滾動時也重新繪製（手機縮放時可能需要）
+                    setTimeout(() => {
+                        drawGeneKeyLines();
+                    }, 50);
+                });
             }
             
-            // 定期檢查縮放變化（備用方案）
-            setInterval(checkZoom, 500);
+            // 監聽頁面縮放事件（使用 ResizeObserver 更準確）
+            let resizeObserver = null;
+            try {
+                resizeObserver = new ResizeObserver(entries => {
+                    for (let entry of entries) {
+                        // 檢查尺寸變化是否由縮放引起
+                        setTimeout(() => {
+                            drawGeneKeyLines();
+                        }, 100);
+                    }
+                });
+                
+                // 觀察 SVG 父容器的尺寸變化
+                if (svgParent) {
+                    resizeObserver.observe(svgParent);
+                }
+            } catch (e) {
+                console.warn('ResizeObserver 不支援，使用備用方案');
+            }
+            
+            // 定期檢查縮放變化（備用方案，降低頻率以提升性能）
+            setInterval(checkZoom, 1000);
 
             // 將 drawGeneKeyLines 暴露給全域，以便其他地方可以調用
             window.redrawGeneKeyLines = drawGeneKeyLines;
 
             // ==================== 過濾功能 ====================
             
+            // 保存當前過濾狀態
+            let currentFilterSequence = 'all';
+            
             // 過濾函數：根據選擇的序列顯示/隱藏球體和連線
             function filterGeneKeys(sequence) {
+                // 保存當前過濾狀態
+                currentFilterSequence = sequence;
+                
                 // 獲取所有球體和連線
                 const allSpheres = document.querySelectorAll('.gene-key-sphere');
                 const allPaths = document.querySelectorAll('.gene-key-path');
@@ -3367,6 +3504,7 @@
                     
                     if (shouldShow) {
                         sphere.classList.remove('hidden', 'filtered-out');
+                        sphere.style.display = '';
                         sphere.style.opacity = '1';
                         sphere.style.pointerEvents = 'auto';
                         
@@ -3416,8 +3554,9 @@
                             }
                         }
                     } else {
+                        // 完全不顯示不匹配的球體
                         sphere.classList.add('filtered-out');
-                        sphere.style.opacity = '0.2';
+                        sphere.style.display = 'none';
                         sphere.style.pointerEvents = 'none';
                     }
                 });
@@ -3429,14 +3568,17 @@
                         // 顯示所有連線
                         path.classList.remove('hidden', 'filtered-out');
                         path.style.opacity = '0.5';
+                        path.style.display = '';
                     } else {
-                        // 只顯示匹配序列的連線
+                        // 只顯示匹配序列的連線，不匹配的完全不顯示
                         if (pathSequence === sequence) {
                             path.classList.remove('hidden', 'filtered-out');
                             path.style.opacity = '0.5';
+                            path.style.display = '';
                         } else {
+                            // 完全不顯示不匹配的連線
                             path.classList.add('filtered-out');
-                            path.style.opacity = '0.1';
+                            path.style.display = 'none';
                         }
                     }
                 });
@@ -3606,6 +3748,7 @@
                         month: formData.month,
                         day: formData.day,
                         time: formData.time,
+                        region: document.getElementById('region').value,
                         county: document.getElementById('county').value,
                         district: document.getElementById('district').value,
                         longitude: formData.longitude,
@@ -3674,34 +3817,78 @@
                 return;
             }
             
+            // 先設置地區（如果記錄中有保存）
+            const regionSelect = document.getElementById('region');
+            if (record.input.region) {
+                regionSelect.value = record.input.region;
+                // 觸發地區變更事件以初始化縣市選單
+                const regionEvent = new Event('change');
+                regionSelect.dispatchEvent(regionEvent);
+            }
+            
+            // 設置基本資料
             document.getElementById('year').value = record.input.year;
             document.getElementById('month').value = record.input.month;
             document.getElementById('day').value = record.input.day;
             document.getElementById('time').value = record.input.time;
-            document.getElementById('timezone').value = record.input.timezone;
+            document.getElementById('timezone').value = record.input.timezone || 'Asia/Shanghai';
             document.getElementById('longitude').value = record.input.longitude;
             document.getElementById('latitude').value = record.input.latitude;
             
-            // 設置縣市和區域
-            const countySelect = document.getElementById('county');
-            const districtSelect = document.getElementById('district');
-            countySelect.value = record.input.county;
-            
-            // 觸發縣市變更事件以更新區域選單
-            if (countySelect.value) {
-                const event = new Event('change');
-                countySelect.dispatchEvent(event);
+            // 等待地區選單初始化完成後，設置縣市和區域
+            setTimeout(() => {
+                const countySelect = document.getElementById('county');
+                const districtSelect = document.getElementById('district');
                 
-                // 等待區域選單更新後設置區域
-                setTimeout(() => {
-                    districtSelect.value = record.input.district;
-                }, 100);
-            }
+                if (record.input.county) {
+                    countySelect.value = record.input.county;
+                    
+                    // 觸發縣市變更事件以更新區域選單
+                    if (countySelect.value) {
+                        const countyEvent = new Event('change');
+                        countySelect.dispatchEvent(countyEvent);
+                        
+                        // 等待區域選單更新後設置區域
+                        setTimeout(() => {
+                            if (record.input.district) {
+                                districtSelect.value = record.input.district;
+                                // 觸發區域變更事件以更新經緯度
+                                const districtEvent = new Event('change');
+                                districtSelect.dispatchEvent(districtEvent);
+                            }
+                            
+                            // 所有資料載入完成後，自動觸發計算
+                            setTimeout(() => {
+                                const calculateBtn = document.getElementById('calculate-btn');
+                                if (calculateBtn) {
+                                    calculateBtn.click();
+                                }
+                            }, 200);
+                        }, 150);
+                    } else {
+                        // 如果沒有縣市，直接觸發計算
+                        setTimeout(() => {
+                            const calculateBtn = document.getElementById('calculate-btn');
+                            if (calculateBtn) {
+                                calculateBtn.click();
+                            }
+                        }, 200);
+                    }
+                } else {
+                    // 如果沒有縣市資料，直接觸發計算
+                    setTimeout(() => {
+                        const calculateBtn = document.getElementById('calculate-btn');
+                        if (calculateBtn) {
+                            calculateBtn.click();
+                        }
+                    }, 200);
+                }
+            }, 200);
             
             // 關閉歷史記錄面板
             document.getElementById('history-container').classList.add('hidden');
             
-            showMessage('記錄已載入，請點擊「計算人類圖」', 'success');
+            showMessage('記錄已載入，正在計算...', 'success');
         }
 
         // 渲染歷史記錄列表
