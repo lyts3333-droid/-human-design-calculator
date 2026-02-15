@@ -20,23 +20,50 @@ import pandas as pd
 
 app = Flask(__name__, static_folder='.')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///human_design.db')
+
+# 檢測是否在 Vercel 環境（Serverless Functions 不支持文件系統數據庫）
+IS_VERCEL = (
+    os.environ.get('VERCEL') == '1' or 
+    os.environ.get('VERCEL_ENV') is not None or
+    'vercel' in os.environ.get('PATH', '').lower() or
+    os.path.exists('/.vercel')
+)
+
+if IS_VERCEL:
+    # Vercel 環境：完全禁用數據庫功能
+    # 不初始化 SQLAlchemy，避免任何數據庫操作
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    print("[INFO] 檢測到 Vercel 環境，數據庫功能已禁用")
+    DB_DISABLED = True
+else:
+    # 本地環境：使用文件數據庫
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///human_design.db')
+    DB_DISABLED = False
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 CORS(app, supports_credentials=True)  # 啟用 CORS，允許跨域請求和憑證
 
-# 初始化擴展
-db = SQLAlchemy(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'login'
-login_manager.session_protection = 'strong'
+# 初始化擴展（僅在非 Vercel 環境）
+if not IS_VERCEL:
+    db = SQLAlchemy(app)
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'login'
+    login_manager.session_protection = 'strong'
+else:
+    # Vercel 環境：創建假的對象避免導入錯誤
+    db = None
+    login_manager = None
+    print("[INFO] Vercel 環境：跳過數據庫和登錄管理器初始化")
 
 # ==================== 數據庫模型 ====================
 
-class User(UserMixin, db.Model):
+# 僅在非 Vercel 環境定義模型
+if not IS_VERCEL:
+    class User(UserMixin, db.Model):
     """用戶模型"""
     __tablename__ = 'users'
     
@@ -67,29 +94,29 @@ class User(UserMixin, db.Model):
         }
 
 
-class HistoryRecord(db.Model):
-    """歷史記錄模型"""
-    __tablename__ = 'history_records'
-    
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
-    
-    # 輸入數據（JSON）
-    input_data = db.Column(db.Text, nullable=False)  # JSON 字符串
-    
-    # 結果數據（JSON）
-    result_data = db.Column(db.Text, nullable=False)  # JSON 字符串
-    
-    def to_dict(self):
-        """轉換為字典"""
-        import json
-        return {
-            'id': self.id,
-            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
-            'input': json.loads(self.input_data) if self.input_data else {},
-            'result': json.loads(self.result_data) if self.result_data else {}
-        }
+    class HistoryRecord(db.Model):
+        """歷史記錄模型"""
+        __tablename__ = 'history_records'
+        
+        id = db.Column(db.Integer, primary_key=True)
+        user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+        timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
+        
+        # 輸入數據（JSON）
+        input_data = db.Column(db.Text, nullable=False)  # JSON 字符串
+        
+        # 結果數據（JSON）
+        result_data = db.Column(db.Text, nullable=False)  # JSON 字符串
+        
+        def to_dict(self):
+            """轉換為字典"""
+            import json
+            return {
+                'id': self.id,
+                'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+                'input': json.loads(self.input_data) if self.input_data else {},
+                'result': json.loads(self.result_data) if self.result_data else {}
+            }
 
 
 @login_manager.user_loader
@@ -107,8 +134,11 @@ def init_db():
         print("[INFO] ✓ 數據庫已初始化")
 
 
-# 在應用啟動時初始化數據庫
-init_db()
+# 在應用啟動時初始化數據庫（僅在非 Vercel 環境）
+if not IS_VERCEL:
+    init_db()
+else:
+    print("[INFO] Vercel 環境：跳過數據庫初始化")
 
 # ==================== Swiss Ephemeris 星曆檔案路徑設置 ====================
 # 設置星曆檔案路徑，確保使用精確的星曆數據而非簡化算法
@@ -1495,6 +1525,11 @@ def health_check():
 @app.route('/api/register', methods=['POST'])
 def register():
     """用戶註冊"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'error': 'Vercel 環境不支持用戶註冊功能。請直接使用應用，無需註冊。',
+            'status': 'error'
+        }), 503
     try:
         data = request.get_json()
         
@@ -1553,6 +1588,11 @@ def register():
 @app.route('/api/login', methods=['POST'])
 def login():
     """用戶登錄"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'error': 'Vercel 環境不支持用戶登錄功能。請直接使用應用，無需登錄。',
+            'status': 'error'
+        }), 503
     try:
         data = request.get_json()
         
@@ -1588,8 +1628,13 @@ def login():
 
 
 @app.route('/api/logout', methods=['POST'])
-@login_required
 def logout():
+    """用戶登出"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'status': 'success',
+            'message': '已登出（Vercel 環境無需登錄）'
+        }), 200
     """用戶登出"""
     try:
         logout_user()
@@ -1600,8 +1645,18 @@ def logout():
 
 
 @app.route('/api/user', methods=['GET'])
-@login_required
 def get_current_user():
+    """獲取當前登錄用戶信息"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'status': 'error',
+            'error': 'Vercel 環境不支持用戶功能'
+        }), 503
+    if not login_manager or not current_user.is_authenticated:
+        return jsonify({
+            'status': 'error',
+            'error': '未登錄'
+        }), 401
     """獲取當前登錄用戶信息"""
     try:
         return jsonify({
@@ -1616,9 +1671,14 @@ def get_current_user():
 # ==================== 歷史記錄 API ====================
 
 @app.route('/api/history', methods=['GET'])
-@login_required
 def get_history_records():
     """獲取用戶的所有歷史記錄"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'error': 'Vercel 環境不支持歷史記錄功能，請使用本地部署',
+            'status': 'error',
+            'records': []
+        }), 503
     try:
         records = HistoryRecord.query.filter_by(user_id=current_user.id)\
             .order_by(HistoryRecord.timestamp.desc())\
@@ -1636,9 +1696,13 @@ def get_history_records():
 
 
 @app.route('/api/history', methods=['POST'])
-@login_required
 def save_history_record():
     """保存歷史記錄"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'error': 'Vercel 環境不支持歷史記錄保存，請使用本地部署',
+            'status': 'error'
+        }), 503
     try:
         data = request.get_json()
         
@@ -1676,8 +1740,13 @@ def save_history_record():
 
 
 @app.route('/api/history/<int:record_id>', methods=['DELETE'])
-@login_required
 def delete_history_record(record_id):
+    """刪除歷史記錄"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'error': 'Vercel 環境不支持此功能，請使用本地部署',
+            'status': 'error'
+        }), 503
     """刪除歷史記錄"""
     try:
         record = HistoryRecord.query.filter_by(id=record_id, user_id=current_user.id).first()
@@ -1700,8 +1769,13 @@ def delete_history_record(record_id):
 
 
 @app.route('/api/history/clear', methods=['POST'])
-@login_required
 def clear_all_history():
+    """清空所有歷史記錄"""
+    if IS_VERCEL or DB_DISABLED:
+        return jsonify({
+            'error': 'Vercel 環境不支持此功能，請使用本地部署',
+            'status': 'error'
+        }), 503
     """清空所有歷史記錄"""
     try:
         HistoryRecord.query.filter_by(user_id=current_user.id).delete()

@@ -3850,7 +3850,7 @@
 
         // ==================== 歷史記錄管理 ====================
         
-        // 獲取所有歷史記錄（從 API）
+        // 獲取所有歷史記錄（從 API，失敗時回退到 localStorage）
         async function getHistoryRecords() {
             try {
                 const response = await fetch('/api/history', {
@@ -3861,12 +3861,27 @@
                 if (response.ok) {
                     const data = await response.json();
                     return data.records || [];
+                } else if (response.status === 503) {
+                    // Vercel 環境不支持，回退到 localStorage
+                    console.warn('API 不可用，使用 localStorage');
+                    return getHistoryRecordsFromLocalStorage();
                 } else {
                     console.error('獲取歷史記錄失敗:', response.status);
-                    return [];
+                    return getHistoryRecordsFromLocalStorage();
                 }
             } catch (e) {
-                console.error('讀取歷史記錄失敗:', e);
+                console.error('讀取歷史記錄失敗，使用 localStorage:', e);
+                return getHistoryRecordsFromLocalStorage();
+            }
+        }
+
+        // 從 localStorage 獲取歷史記錄（回退方案）
+        function getHistoryRecordsFromLocalStorage() {
+            try {
+                const records = localStorage.getItem('humanDesignHistory');
+                return records ? JSON.parse(records) : [];
+            } catch (e) {
+                console.error('讀取 localStorage 失敗:', e);
                 return [];
             }
         }
@@ -3908,15 +3923,60 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('歷史記錄已保存');
+                    console.log('歷史記錄已保存到數據庫');
                     return data.record ? data.record.id : null;
+                } else if (response.status === 503) {
+                    // Vercel 環境不支持，回退到 localStorage
+                    console.warn('API 不可用，使用 localStorage 保存');
+                    return saveHistoryRecordToLocalStorage(formData, resultData);
                 } else {
                     const errorData = await response.json();
                     console.error('保存歷史記錄失敗:', errorData.error);
-                    return null;
+                    // 回退到 localStorage
+                    return saveHistoryRecordToLocalStorage(formData, resultData);
                 }
             } catch (e) {
-                console.error('保存歷史記錄失敗:', e);
+                console.error('保存歷史記錄到 API 失敗，使用 localStorage:', e);
+                // 回退到 localStorage
+                return saveHistoryRecordToLocalStorage(formData, resultData);
+            }
+        }
+
+        // 保存到 localStorage（回退方案）
+        function saveHistoryRecordToLocalStorage(formData, resultData) {
+            try {
+                const records = JSON.parse(localStorage.getItem('humanDesignHistory') || '[]');
+                const newRecord = {
+                    id: Date.now().toString(),
+                    timestamp: new Date().toISOString(),
+                    input: {
+                        year: formData.year,
+                        month: formData.month,
+                        day: formData.day,
+                        time: formData.time,
+                        name: formData.name || '',
+                        region: document.getElementById('region').value,
+                        county: document.getElementById('county').value,
+                        district: document.getElementById('district').value,
+                        longitude: formData.longitude,
+                        latitude: formData.latitude,
+                        timezone: formData.timezone
+                    },
+                    result: {
+                        input_date: resultData.input_date,
+                        personality_list: resultData.personality_list,
+                        design_list: resultData.design_list
+                    }
+                };
+                records.unshift(newRecord);
+                if (records.length > 50) {
+                    records.splice(50);
+                }
+                localStorage.setItem('humanDesignHistory', JSON.stringify(records));
+                console.log('歷史記錄已保存到 localStorage');
+                return newRecord.id;
+            } catch (e) {
+                console.error('保存到 localStorage 失敗:', e);
                 return null;
             }
         }
@@ -4394,12 +4454,17 @@
                     const data = await response.json();
                     currentUser = data.user;
                     showMainApp();
+                } else if (response.status === 503) {
+                    // Vercel 環境不支持登錄，直接顯示主應用（使用 localStorage）
+                    console.warn('Vercel 環境：使用 localStorage 模式');
+                    showMainApp();
                 } else {
                     showAuthForm();
                 }
             } catch (error) {
                 console.error('檢查登錄狀態失敗:', error);
-                showAuthForm();
+                // 如果 API 不可用，直接顯示主應用（使用 localStorage）
+                showMainApp();
             }
         }
 
