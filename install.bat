@@ -3,35 +3,48 @@ chcp 65001 >nul 2>&1
 cls
 echo.
 echo ========================================
-echo   Install Dependencies
+echo   安裝依賴包
 echo ========================================
 echo.
 
+REM 檢查 Python
 python --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] Python not found!
-    echo Please install Python 3.7 or higher
+    echo [ERROR] 找不到 Python！
+    echo 請先安裝 Python 3.7 或更高版本
+    echo.
     pause
     exit /b 1
 )
 
-pip --version >nul 2>&1
+echo 正在檢查 Python 版本...
+python --version
+
+REM 檢查 pip
+python -m pip --version >nul 2>&1
 if errorlevel 1 (
-    echo [ERROR] pip not found!
+    echo [ERROR] 找不到 pip！
+    echo 請先安裝 pip
+    echo.
     pause
     exit /b 1
 )
 
-echo Installing dependencies from requirements.txt...
-echo This may take a few minutes...
+echo.
+echo ========================================
+echo   開始安裝依賴包
+echo ========================================
+echo.
+echo 這可能需要幾分鐘時間，請耐心等待...
 echo.
 
-pip install Flask==3.0.0
-pip install flask-cors==4.0.0
-pip install pyswisseph
-pip install pytz==2024.1
-pip install gunicorn
-pip install pandas
+REM 升級 pip
+echo [1/2] 升級 pip...
+python -m pip install --upgrade pip --quiet
+
+REM 安裝依賴
+echo [2/2] 安裝依賴包...
+python -m pip install -r requirements.txt
 
 if errorlevel 1 (
     echo.

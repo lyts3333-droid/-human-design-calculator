@@ -1501,9 +1501,14 @@ def register():
         if not data:
             return jsonify({'error': '請提供 JSON 數據', 'status': 'error'}), 400
         
-        username = data.get('username', '').strip()
-        password = data.get('password', '').strip()
-        email = data.get('email', '').strip() or None
+        # 安全地获取并处理可能为 None 的值
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
+        email = data.get('email')
+        if email:
+            email = email.strip() or None
+        else:
+            email = None
         
         # 驗證輸入
         if not username or not password:
@@ -1554,8 +1559,9 @@ def login():
         if not data:
             return jsonify({'error': '請提供 JSON 數據', 'status': 'error'}), 400
         
-        username = data.get('username', '').strip()
-        password = data.get('password', '').strip()
+        # 安全地获取并处理可能为 None 的值
+        username = (data.get('username') or '').strip()
+        password = (data.get('password') or '').strip()
         remember = data.get('remember', True)
         
         if not username or not password:

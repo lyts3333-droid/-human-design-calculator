@@ -27,12 +27,8 @@ if errorlevel 1 (
 REM Install dependencies
 echo Installing dependencies...
 echo.
-pip install Flask==3.0.0
-pip install flask-cors==4.0.0
-pip install pyswisseph
-pip install pytz==2024.1
-pip install gunicorn
-pip install pandas
+python -m pip install --upgrade pip --quiet
+python -m pip install -r requirements.txt
 
 if errorlevel 1 (
     echo.
