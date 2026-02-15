@@ -5,8 +5,11 @@
 整合完整的計算邏輯，提供 Web API 接口
 """
 
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session
 from flask_cors import CORS
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import hashlib
 from typing import Dict, Tuple, List, Optional
@@ -16,7 +19,96 @@ import os
 import pandas as pd
 
 app = Flask(__name__, static_folder='.')
-CORS(app)  # 啟用 CORS，允許跨域請求
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///human_design.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
+CORS(app, supports_credentials=True)  # 啟用 CORS，允許跨域請求和憑證
+
+# 初始化擴展
+db = SQLAlchemy(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.session_protection = 'strong'
+
+# ==================== 數據庫模型 ====================
+
+class User(UserMixin, db.Model):
+    """用戶模型"""
+    __tablename__ = 'users'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    
+    # 關聯到歷史記錄
+    records = db.relationship('HistoryRecord', backref='user', lazy=True, cascade='all, delete-orphan')
+    
+    def set_password(self, password):
+        """設置密碼（哈希）"""
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        """檢查密碼"""
+        return check_password_hash(self.password_hash, password)
+    
+    def to_dict(self):
+        """轉換為字典（不包含敏感信息）"""
+        return {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class HistoryRecord(db.Model):
+    """歷史記錄模型"""
+    __tablename__ = 'history_records'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, index=True)
+    
+    # 輸入數據（JSON）
+    input_data = db.Column(db.Text, nullable=False)  # JSON 字符串
+    
+    # 結果數據（JSON）
+    result_data = db.Column(db.Text, nullable=False)  # JSON 字符串
+    
+    def to_dict(self):
+        """轉換為字典"""
+        import json
+        return {
+            'id': self.id,
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
+            'input': json.loads(self.input_data) if self.input_data else {},
+            'result': json.loads(self.result_data) if self.result_data else {}
+        }
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    """載入用戶（Flask-Login 需要）"""
+    return User.query.get(int(user_id))
+
+
+# ==================== 數據庫初始化 ====================
+
+def init_db():
+    """初始化數據庫"""
+    with app.app_context():
+        db.create_all()
+        print("[INFO] ✓ 數據庫已初始化")
+
+
+# 在應用啟動時初始化數據庫
+init_db()
 
 # ==================== Swiss Ephemeris 星曆檔案路徑設置 ====================
 # 設置星曆檔案路徑，確保使用精確的星曆數據而非簡化算法
@@ -1396,6 +1488,228 @@ def health_check():
         'motor_centers': MOTOR_CENTERS,
         'planets': PLANETS
     }), 200
+
+
+# ==================== 用戶認證 API ====================
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    """用戶註冊"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': '請提供 JSON 數據', 'status': 'error'}), 400
+        
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
+        email = data.get('email', '').strip() or None
+        
+        # 驗證輸入
+        if not username or not password:
+            return jsonify({'error': '用戶名和密碼不能為空', 'status': 'error'}), 400
+        
+        if len(username) < 3:
+            return jsonify({'error': '用戶名至少需要3個字符', 'status': 'error'}), 400
+        
+        if len(password) < 6:
+            return jsonify({'error': '密碼至少需要6個字符', 'status': 'error'}), 400
+        
+        # 檢查用戶名是否已存在
+        if User.query.filter_by(username=username).first():
+            return jsonify({'error': '用戶名已存在', 'status': 'error'}), 400
+        
+        # 檢查郵箱是否已存在（如果提供）
+        if email and User.query.filter_by(email=email).first():
+            return jsonify({'error': '郵箱已被使用', 'status': 'error'}), 400
+        
+        # 創建新用戶
+        user = User(username=username, email=email)
+        user.set_password(password)
+        
+        db.session.add(user)
+        db.session.commit()
+        
+        # 自動登錄
+        login_user(user, remember=True)
+        
+        return jsonify({
+            'status': 'success',
+            'message': '註冊成功',
+            'user': user.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] 註冊失敗: {e}")
+        return jsonify({'error': f'註冊失敗: {str(e)}', 'status': 'error'}), 500
+
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    """用戶登錄"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': '請提供 JSON 數據', 'status': 'error'}), 400
+        
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
+        remember = data.get('remember', True)
+        
+        if not username or not password:
+            return jsonify({'error': '用戶名和密碼不能為空', 'status': 'error'}), 400
+        
+        # 查找用戶
+        user = User.query.filter_by(username=username).first()
+        
+        if not user or not user.check_password(password):
+            return jsonify({'error': '用戶名或密碼錯誤', 'status': 'error'}), 401
+        
+        # 登錄用戶
+        login_user(user, remember=remember)
+        
+        return jsonify({
+            'status': 'success',
+            'message': '登錄成功',
+            'user': user.to_dict()
+        }), 200
+        
+    except Exception as e:
+        print(f"[ERROR] 登錄失敗: {e}")
+        return jsonify({'error': f'登錄失敗: {str(e)}', 'status': 'error'}), 500
+
+
+@app.route('/api/logout', methods=['POST'])
+@login_required
+def logout():
+    """用戶登出"""
+    try:
+        logout_user()
+        return jsonify({'status': 'success', 'message': '已登出'}), 200
+    except Exception as e:
+        print(f"[ERROR] 登出失敗: {e}")
+        return jsonify({'error': f'登出失敗: {str(e)}', 'status': 'error'}), 500
+
+
+@app.route('/api/user', methods=['GET'])
+@login_required
+def get_current_user():
+    """獲取當前登錄用戶信息"""
+    try:
+        return jsonify({
+            'status': 'success',
+            'user': current_user.to_dict()
+        }), 200
+    except Exception as e:
+        print(f"[ERROR] 獲取用戶信息失敗: {e}")
+        return jsonify({'error': f'獲取用戶信息失敗: {str(e)}', 'status': 'error'}), 500
+
+
+# ==================== 歷史記錄 API ====================
+
+@app.route('/api/history', methods=['GET'])
+@login_required
+def get_history_records():
+    """獲取用戶的所有歷史記錄"""
+    try:
+        records = HistoryRecord.query.filter_by(user_id=current_user.id)\
+            .order_by(HistoryRecord.timestamp.desc())\
+            .limit(50)\
+            .all()
+        
+        return jsonify({
+            'status': 'success',
+            'records': [record.to_dict() for record in records]
+        }), 200
+        
+    except Exception as e:
+        print(f"[ERROR] 獲取歷史記錄失敗: {e}")
+        return jsonify({'error': f'獲取歷史記錄失敗: {str(e)}', 'status': 'error'}), 500
+
+
+@app.route('/api/history', methods=['POST'])
+@login_required
+def save_history_record():
+    """保存歷史記錄"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': '請提供 JSON 數據', 'status': 'error'}), 400
+        
+        input_data = data.get('input')
+        result_data = data.get('result')
+        
+        if not input_data or not result_data:
+            return jsonify({'error': '缺少必需字段: input 或 result', 'status': 'error'}), 400
+        
+        import json
+        
+        # 創建新記錄
+        record = HistoryRecord(
+            user_id=current_user.id,
+            input_data=json.dumps(input_data, ensure_ascii=False),
+            result_data=json.dumps(result_data, ensure_ascii=False)
+        )
+        
+        db.session.add(record)
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': '記錄已保存',
+            'record': record.to_dict()
+        }), 201
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] 保存歷史記錄失敗: {e}")
+        return jsonify({'error': f'保存歷史記錄失敗: {str(e)}', 'status': 'error'}), 500
+
+
+@app.route('/api/history/<int:record_id>', methods=['DELETE'])
+@login_required
+def delete_history_record(record_id):
+    """刪除歷史記錄"""
+    try:
+        record = HistoryRecord.query.filter_by(id=record_id, user_id=current_user.id).first()
+        
+        if not record:
+            return jsonify({'error': '記錄不存在或無權限', 'status': 'error'}), 404
+        
+        db.session.delete(record)
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': '記錄已刪除'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] 刪除歷史記錄失敗: {e}")
+        return jsonify({'error': f'刪除歷史記錄失敗: {str(e)}', 'status': 'error'}), 500
+
+
+@app.route('/api/history/clear', methods=['POST'])
+@login_required
+def clear_all_history():
+    """清空所有歷史記錄"""
+    try:
+        HistoryRecord.query.filter_by(user_id=current_user.id).delete()
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': '所有記錄已清空'
+        }), 200
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"[ERROR] 清空歷史記錄失敗: {e}")
+        return jsonify({'error': f'清空歷史記錄失敗: {str(e)}', 'status': 'error'}), 500
 
 
 if __name__ == '__main__':
