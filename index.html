@@ -4548,6 +4548,11 @@
                     currentUser = data.user;
                     showMainApp();
                     alert(data.message || '操作成功');
+                } else if (response.status === 503) {
+                    // Vercel 環境不支持登錄，直接顯示主應用
+                    console.warn('Vercel 環境：跳過登錄，直接使用應用');
+                    currentUser = null;
+                    showMainApp();
                 } else {
                     alert(data.error || '操作失敗');
                 }

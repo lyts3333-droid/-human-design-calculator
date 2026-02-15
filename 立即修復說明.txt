@@ -1,0 +1,33 @@
+立即修復步驟
+================
+
+問題：Vercel 環境中仍然嘗試寫入數據庫
+
+解決方法：
+
+1. 上傳修復後的代碼到 GitHub
+   - 運行：上傳到GitHub.bat
+   - 或手動：
+     git add app.py index.html
+     git commit -m "修復：Vercel 環境完全禁用數據庫，前端自動跳過登錄"
+     git push
+
+2. 在 Vercel Dashboard 重新部署
+   - 登錄 Vercel
+   - 進入項目
+   - 點擊 "Deployments"
+   - 點擊最新的部署
+   - 點擊 "Redeploy" → "Rebuild"
+
+3. 等待部署完成（約 1-2 分鐘）
+
+4. 測試
+   - 訪問網站
+   - 應該直接顯示主應用，無需登錄
+   - 如果還看到登錄界面，刷新頁面（F5）
+
+修復內容：
+- 後端：在 Vercel 環境中完全禁用數據庫操作
+- 前端：自動檢測並跳過登錄界面
+- 歷史記錄：自動使用 localStorage
+
