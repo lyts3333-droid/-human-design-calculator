@@ -22,11 +22,14 @@ app = Flask(__name__, static_folder='.')
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
 
 # 檢測是否在 Vercel 環境（Serverless Functions 不支持文件系統數據庫）
+# Vercel 會設置 VERCEL=1 環境變量
 IS_VERCEL = (
     os.environ.get('VERCEL') == '1' or 
     os.environ.get('VERCEL_ENV') is not None or
+    os.environ.get('VERCEL_URL') is not None or
     'vercel' in os.environ.get('PATH', '').lower() or
-    os.path.exists('/.vercel')
+    os.path.exists('/.vercel') or
+    os.path.exists('/var/task')  # Vercel Lambda 環境
 )
 
 if IS_VERCEL:
@@ -1525,11 +1528,26 @@ def health_check():
 @app.route('/api/register', methods=['POST'])
 def register():
     """用戶註冊"""
-    if IS_VERCEL or DB_DISABLED:
+    # 優先檢查 Vercel 環境，完全禁用註冊功能
+    if IS_VERCEL or DB_DISABLED or db is None or login_manager is None:
         return jsonify({
             'error': 'Vercel 環境不支持用戶註冊功能。請直接使用應用，無需註冊。',
             'status': 'error'
         }), 503
+    
+    # 額外檢查：確保 User 模型已定義
+    try:
+        if 'User' not in globals() or User is None:
+            return jsonify({
+                'error': '數據庫功能未啟用。請直接使用應用，無需註冊。',
+                'status': 'error'
+            }), 503
+    except:
+        return jsonify({
+            'error': '數據庫功能未啟用。請直接使用應用，無需註冊。',
+            'status': 'error'
+        }), 503
+    
     try:
         data = request.get_json()
         
@@ -1580,7 +1598,8 @@ def register():
         }), 201
         
     except Exception as e:
-        db.session.rollback()
+        if db:
+            db.session.rollback()
         print(f"[ERROR] 註冊失敗: {e}")
         return jsonify({'error': f'註冊失敗: {str(e)}', 'status': 'error'}), 500
 
@@ -1588,9 +1607,23 @@ def register():
 @app.route('/api/login', methods=['POST'])
 def login():
     """用戶登錄"""
-    if IS_VERCEL or DB_DISABLED:
+    # 優先檢查 Vercel 環境，完全禁用登錄功能
+    if IS_VERCEL or DB_DISABLED or db is None or login_manager is None:
         return jsonify({
             'error': 'Vercel 環境不支持用戶登錄功能。請直接使用應用，無需登錄。',
+            'status': 'error'
+        }), 503
+    
+    # 額外檢查：確保 User 模型已定義
+    try:
+        if 'User' not in globals() or User is None:
+            return jsonify({
+                'error': '數據庫功能未啟用。請直接使用應用，無需登錄。',
+                'status': 'error'
+            }), 503
+    except:
+        return jsonify({
+            'error': '數據庫功能未啟用。請直接使用應用，無需登錄。',
             'status': 'error'
         }), 503
     try:
