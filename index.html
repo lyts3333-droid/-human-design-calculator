@@ -755,12 +755,67 @@
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 15px;
             padding: 40px;
-            overflow: visible;
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
-            /* 觸控手勢優化 */
-            touch-action: pan-x pan-y pinch-zoom;
+            /* 觸控手勢優化 - 允許縮放和平移 */
+            touch-action: none;
+            /* 確保容器可以接收所有觸摸事件 */
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* SVG 縮放容器 */
+        .gene-keys-svg-container {
+            width: 100%;
+            height: 100%;
+            min-height: 900px;
+            position: relative;
+            overflow: hidden;
+            cursor: grab;
+        }
+        
+        .gene-keys-svg-container:active {
+            cursor: grabbing;
+        }
+        
+        /* 縮放控制按鈕 */
+        .zoom-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .zoom-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+        
+        .zoom-btn:hover {
+            background: #764ba2;
+        }
+        
+        .zoom-btn:active {
+            transform: scale(0.95);
         }
         
         /* 生命之花背景圖案 */
@@ -830,21 +885,25 @@
             grid-template-rows: 1fr 2fr 1fr;
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s, box-shadow 0.3s;
+            transition: transform 0.3s, box-shadow 0.3s, filter 0.3s;
             cursor: pointer;
             position: relative;
             z-index: 10;
             padding: 5px;
             box-sizing: border-box;
+            overflow: hidden;
+            transform-origin: center center;
+            outline: none;
         }
         
         .gene-key-sphere:hover {
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
         }
         
-        /* 對於沒有自定義 transform 的球體，hover 時應用 scale */
+        /* 對於沒有自定義 transform 的球體，hover 時只做圓形放大，不露出方形邊框 */
         .gene-key-sphere:not([data-transform]):hover {
             transform: scale(1.15);
+            transform-origin: center center;
         }
         
         /* 對於有自定義 transform 的球體，hover 時在原有 transform 基礎上加上 scale */
@@ -2610,8 +2669,8 @@
         function getCurrentLocationData() {
             const regionSelect = document.getElementById('region');
             if (!regionSelect) return null;
-            
-            const region = regionSelect.value;
+
+            const region = (regionSelect.value || '').trim().toLowerCase();
             if (region === 'taiwan') {
                 return taiwanLocations;
             } else if (region === 'china') {
@@ -3062,7 +3121,7 @@
         }
 
         
-        // 渲染基因天命 (Gene Keys) 黃金之路 - 重構版本
+        // 渲染基因天命 (Gene Keys) 黃金之路 - 優化版本（支持流暢縮放和平移）
         function renderGeneKeys(personalityList, designList) {
             const container = document.getElementById('gene-keys-container');
             const section = document.getElementById('gene-keys-section');
@@ -3071,6 +3130,53 @@
                 console.error('找不到基因天命容器');
                 return;
             }
+            
+            // 清除舊內容
+            container.innerHTML = '';
+            
+            // 創建 SVG 容器（支持縮放和平移）
+            const svgContainer = document.createElement('div');
+            svgContainer.className = 'gene-keys-svg-container';
+            svgContainer.id = 'gene-keys-svg-container';
+            
+            // 創建主 SVG 元素
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('id', 'gene-keys-main-svg');
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 1000 1000');
+            svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            
+            // 創建縮放和平移的組（g 元素）
+            const transformGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            transformGroup.setAttribute('id', 'gene-keys-transform-group');
+            transformGroup.setAttribute('transform', 'translate(500, 500) scale(1)');
+            
+            // 創建連接線組（在球體下方）
+            const linesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            linesGroup.setAttribute('id', 'gene-keys-lines-group');
+            
+            // 創建球體組（在連接線上方）
+            const spheresGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            spheresGroup.setAttribute('id', 'gene-keys-spheres-group');
+            
+            transformGroup.appendChild(linesGroup);
+            transformGroup.appendChild(spheresGroup);
+            svg.appendChild(transformGroup);
+            svgContainer.appendChild(svg);
+            
+            // 添加縮放控制按鈕
+            const zoomControls = document.createElement('div');
+            zoomControls.className = 'zoom-controls';
+            zoomControls.innerHTML = `
+                <button class="zoom-btn" id="zoom-in-btn" title="放大">+</button>
+                <button class="zoom-btn" id="zoom-out-btn" title="縮小">-</button>
+                <button class="zoom-btn" id="zoom-reset-btn" title="重置">⌂</button>
+            `;
+            svgContainer.appendChild(zoomControls);
+            
+            container.appendChild(svgContainer);
+            section.style.display = 'block';
             
             // 從行星列表中提取關鍵數據
             function findPlanet(list, planetName) {
@@ -3150,78 +3256,87 @@
                 { from: 'personality-jupiter', to: 'personality-sun', color: 'blue', sequence: 'prosperity' }, // 黑木星 → 黑太陽
             ];
             
-            // 創建容器（使用 5x5 網格）
-            const wrapper = document.createElement('div');
-            wrapper.className = 'gene-keys-wrapper';
-            
-            // 創建 SVG 層（最底層）
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('class', 'gene-keys-svg');
-            svg.setAttribute('width', '900');
-            svg.setAttribute('height', '900');
-            svg.setAttribute('viewBox', '0 0 900 900');
-            
-            // 計算每個網格單元的中心點（考慮 gap 和 padding）
-            // 總尺寸: 900px, padding: 60px (兩邊), gap: 100px (4個)
-            // 單元格寬度 = (900 - 2*60 - 4*100) / 5 = 76px
+            // 計算每個網格單元的中心點（SVG 座標系統，0-1000）
+            // 使用 1000x1000 的 viewBox，中心在 (500, 500)
+            // 實際佈局範圍約 200-800，留出邊距
             const getCenterPoint = (gridRow, gridCol) => {
-                const padding = 60;
-                const gap = 100;
-                const cellSize = (900 - 2 * padding - 4 * gap) / 5; // 76px
+                const minX = 200;
+                const maxX = 800;
+                const minY = 200;
+                const maxY = 800;
+                const cellWidth = (maxX - minX) / 4; // 4 個間隔
+                const cellHeight = (maxY - minY) / 4;
                 
-                // 計算中心點：padding + (col-1)*(cell+gap) + cell/2
-                const x = padding + (gridCol - 1) * (cellSize + gap) + cellSize / 2;
-                const y = padding + (gridRow - 1) * (cellSize + gap) + cellSize / 2;
+                const x = minX + (gridCol - 1) * cellWidth;
+                const y = minY + (gridRow - 1) * cellHeight;
                 
                 return { x, y };
             };
             
-            // 創建節點並記錄位置
+            // 創建節點並記錄位置（在 SVG 內）
             const nodePositions = {};
+            let currentFilterSequence = 'all'; // 過濾狀態
             
             geneKeyNodes.forEach(node => {
-                // 創建節點元素
-                const nodeEl = document.createElement('div');
-                nodeEl.className = `gene-key-sphere ${node.color}`;
-                nodeEl.id = `gene-key-${node.id}`;
+                // 計算節點位置
+                const center = getCenterPoint(node.gridRow, node.gridCol);
+                let x = center.x;
+                let y = center.y;
+                
+                // 處理額外的 transform（如果有）
+                if (node.transform) {
+                    // 解析 translate 值（例如 "translate(20px, 60px)"）
+                    const match = node.transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
+                    if (match) {
+                        const dx = parseFloat(match[1]) || 0;
+                        const dy = parseFloat(match[2]) || 0;
+                        // 將像素轉換為 SVG 座標（假設 1px ≈ 1 SVG 單位）
+                        x += dx;
+                        y += dy;
+                    }
+                }
+                
+                nodePositions[node.id] = { x, y };
+                
+                // 在 SVG 內創建節點（使用 foreignObject 來包含 HTML）
+                // 視窗設為 144x144，讓 hover 放大 1.15 倍時不會被裁成方形（120*1.15≈138）
+                const foSize = 144;
+                const sphereSize = 120;
+                const foOffset = foSize / 2;
+                const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+                foreignObject.setAttribute('x', x - foOffset);
+                foreignObject.setAttribute('y', y - foOffset);
+                foreignObject.setAttribute('width', String(foSize));
+                foreignObject.setAttribute('height', String(foSize));
+                foreignObject.setAttribute('id', `gene-key-${node.id}`);
+                
+                // 創建 HTML 內容（置中於 foreignObject，避免放大時露出方形邊）
+                const nodeDiv = document.createElement('div');
+                nodeDiv.className = `gene-key-sphere ${node.color}`;
+                nodeDiv.style.width = sphereSize + 'px';
+                nodeDiv.style.height = sphereSize + 'px';
+                nodeDiv.style.margin = ((foSize - sphereSize) / 2) + 'px';
+                nodeDiv.style.pointerEvents = 'auto';
+                nodeDiv.style.cursor = 'pointer';
                 
                 // 設置序列屬性（用於過濾）
-                // 支持多個序列（sequences 數組）或單個序列（sequence）
                 if (node.sequences && Array.isArray(node.sequences)) {
-                    nodeEl.setAttribute('data-sequences', node.sequences.join(','));
-                    // 也設置主要序列（用於向後兼容）
-                    nodeEl.setAttribute('data-sequence', node.sequence || node.sequences[0]);
+                    nodeDiv.setAttribute('data-sequences', node.sequences.join(','));
+                    nodeDiv.setAttribute('data-sequence', node.sequence || node.sequences[0]);
                 } else if (node.sequence) {
-                    nodeEl.setAttribute('data-sequence', node.sequence);
+                    nodeDiv.setAttribute('data-sequence', node.sequence);
                 }
                 
-                // 如果節點有 loveColor 屬性，保存原始顏色和關係模式顏色
+                // 保存顏色信息
                 if (node.loveColor) {
-                    nodeEl.setAttribute('data-original-color', node.color);
-                    nodeEl.setAttribute('data-love-color', node.loveColor);
+                    nodeDiv.setAttribute('data-original-color', node.color);
+                    nodeDiv.setAttribute('data-love-color', node.loveColor);
                 }
-                
-                // 如果節點有 prosperityColor 屬性，保存原始顏色和服務模式顏色
                 if (node.prosperityColor) {
-                    // 如果已經有 data-original-color，不要覆蓋（因為可能同時有 loveColor）
-                    if (!nodeEl.getAttribute('data-original-color')) {
-                        nodeEl.setAttribute('data-original-color', node.color);
+                    if (!nodeDiv.getAttribute('data-original-color')) {
+                        nodeDiv.setAttribute('data-original-color', node.color);
                     }
-                    nodeEl.setAttribute('data-prosperity-color', node.prosperityColor);
-                }
-                
-                // 設置網格位置
-                nodeEl.style.gridRow = node.gridRow;
-                nodeEl.style.gridColumn = node.gridCol;
-                
-                // 如果有 transform 屬性，應用它
-                if (node.transform) {
-                    nodeEl.setAttribute('data-transform', node.transform);
-                    nodeEl.style.transform = node.transform;
-                    // 為了 hover 效果，使用 CSS 變量保存原始 transform + scale
-                    // 確保 hover 時能正確放大
-                    const hoverTransform = node.transform + ' scale(1.15)';
-                    nodeEl.style.setProperty('--original-transform', hoverTransform);
+                    nodeDiv.setAttribute('data-prosperity-color', node.prosperityColor);
                 }
                 
                 // 解析閘門和爻線
@@ -3230,15 +3345,15 @@
                 const gate = parts[0] || '';
                 const line = parts[1] || '';
                 
-                // 獲取星座符號（從原始行星數據）
+                // 獲取星座符號
                 let zodiac = '';
                 const planetData = findPlanet(node.type === 'personality' ? personalityList : designList, node.planet);
                 if (planetData && planetData.constellation_symbol) {
                     zodiac = planetData.constellation_symbol;
                 }
                 
-                // 使用與圓形圖表相同的格式顯示
-                nodeEl.innerHTML = `
+                // 設置內容
+                nodeDiv.innerHTML = `
                     <div class="planet-marker-name">${node.label}</div>
                     <div class="planet-marker-house"></div>
                     <div class="planet-marker-gate">${gate}</div>
@@ -3246,29 +3361,185 @@
                     <div class="planet-marker-zodiac">${zodiac}</div>
                 `;
                 
-                wrapper.appendChild(nodeEl);
-                
-                // 添加點擊事件：顯示基因天命說明
-                nodeEl.addEventListener('click', function() {
+                // 添加點擊事件
+                nodeDiv.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     const gateNumber = parseInt(gate);
                     if (gateNumber && gateNumber >= 1 && gateNumber <= 64) {
-                        // 獲取球體的顏色（從 className 中提取）
-                        let sphereColor = 'orange'; // 默認顏色
-                        if (nodeEl.classList.contains('green')) {
-                            sphereColor = 'green';
-                        } else if (nodeEl.classList.contains('blue')) {
-                            sphereColor = 'blue';
-                        } else if (nodeEl.classList.contains('orange')) {
-                            sphereColor = 'orange';
-                        }
+                        let sphereColor = 'orange';
+                        if (nodeDiv.classList.contains('green')) sphereColor = 'green';
+                        else if (nodeDiv.classList.contains('blue')) sphereColor = 'blue';
                         showGeneKeyDetail(gateNumber, sphereColor);
                     }
                 });
                 
-                // 記錄節點中心位置
-                const center = getCenterPoint(node.gridRow, node.gridCol);
-                nodePositions[node.id] = center;
+                foreignObject.appendChild(nodeDiv);
+                spheresGroup.appendChild(foreignObject);
             });
+            
+            // 繪製連接線（直接在 SVG 座標系統中）
+            function drawGeneKeyLines() {
+                // 清除舊的連線
+                linesGroup.innerHTML = '';
+                
+                connections.forEach(conn => {
+                    const fromPos = nodePositions[conn.from];
+                    const toPos = nodePositions[conn.to];
+                    
+                    if (!fromPos || !toPos) return;
+                    
+                    // 檢查過濾
+                    if (currentFilterSequence !== 'all' && conn.sequence !== currentFilterSequence) {
+                        return;
+                    }
+                    
+                    // 創建連接線
+                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    const d = `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`;
+                    path.setAttribute('d', d);
+                    path.setAttribute('class', `gene-key-path gene-key-path-${conn.color}`);
+                    path.setAttribute('data-sequence', conn.sequence || '');
+                    path.setAttribute('stroke', getConnectionColor(conn.color));
+                    path.setAttribute('stroke-width', '4');
+                    path.setAttribute('stroke-opacity', '0.5');
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('pointer-events', 'none');
+                    
+                    linesGroup.appendChild(path);
+                });
+            }
+            
+            // 繪製連接線
+            drawGeneKeyLines();
+            
+            // ==================== 縮放和平移功能 ====================
+            let scale = 1;
+            let translateX = 500;
+            let translateY = 500;
+            let isDragging = false;
+            let lastX = 0;
+            let lastY = 0;
+            let lastDistance = 0;
+            
+            function updateTransform() {
+                transformGroup.setAttribute('transform', 
+                    `translate(${translateX}, ${translateY}) scale(${scale})`);
+            }
+            
+            // 縮放控制按鈕
+            document.getElementById('zoom-in-btn').addEventListener('click', () => {
+                scale = Math.min(scale * 1.2, 5);
+                updateTransform();
+            });
+            
+            document.getElementById('zoom-out-btn').addEventListener('click', () => {
+                scale = Math.max(scale / 1.2, 0.2);
+                updateTransform();
+            });
+            
+            document.getElementById('zoom-reset-btn').addEventListener('click', () => {
+                scale = 1;
+                translateX = 500;
+                translateY = 500;
+                updateTransform();
+            });
+            
+            // 鼠標拖拽
+            svgContainer.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.zoom-controls')) return;
+                isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                svgContainer.style.cursor = 'grabbing';
+            });
+            
+            svgContainer.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                translateX += dx / scale;
+                translateY += dy / scale;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                updateTransform();
+            });
+            
+            svgContainer.addEventListener('mouseup', () => {
+                isDragging = false;
+                svgContainer.style.cursor = 'grab';
+            });
+            
+            svgContainer.addEventListener('mouseleave', () => {
+                isDragging = false;
+                svgContainer.style.cursor = 'grab';
+            });
+            
+            // 滾輪縮放
+            svgContainer.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? 0.9 : 1.1;
+                scale = Math.max(0.2, Math.min(5, scale * delta));
+                updateTransform();
+            });
+            
+            // 觸摸手勢（雙指縮放）
+            let touches = [];
+            svgContainer.addEventListener('touchstart', (e) => {
+                touches = Array.from(e.touches);
+                if (touches.length === 2) {
+                    const dx = touches[0].clientX - touches[1].clientX;
+                    const dy = touches[0].clientY - touches[1].clientY;
+                    lastDistance = Math.sqrt(dx * dx + dy * dy);
+                } else if (touches.length === 1) {
+                    isDragging = true;
+                    lastX = touches[0].clientX;
+                    lastY = touches[0].clientY;
+                }
+            });
+            
+            svgContainer.addEventListener('touchmove', (e) => {
+                e.preventDefault();
+                touches = Array.from(e.touches);
+                
+                if (touches.length === 2) {
+                    // 雙指縮放
+                    const dx = touches[0].clientX - touches[1].clientX;
+                    const dy = touches[0].clientY - touches[1].clientY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (lastDistance > 0) {
+                        const delta = distance / lastDistance;
+                        scale = Math.max(0.2, Math.min(5, scale * delta));
+                        updateTransform();
+                    }
+                    lastDistance = distance;
+                } else if (touches.length === 1 && isDragging) {
+                    // 單指拖拽
+                    const dx = (touches[0].clientX - lastX) / scale;
+                    const dy = (touches[0].clientY - lastY) / scale;
+                    translateX += dx;
+                    translateY += dy;
+                    lastX = touches[0].clientX;
+                    lastY = touches[0].clientY;
+                    updateTransform();
+                }
+            });
+            
+            svgContainer.addEventListener('touchend', () => {
+                touches = [];
+                isDragging = false;
+                lastDistance = 0;
+            });
+            
+            // 輔助函數：獲取連接線顏色
+            function getConnectionColor(colorType) {
+                switch(colorType) {
+                    case 'blue': return '#3498db';
+                    case 'green': return '#76a07b';
+                    case 'red': return '#c0392b';
+                    default: return '#999';
+                }
+            }
             
             // 輔助函數：獲取連接線顏色
             function getConnectionColor(colorType) {
@@ -3280,316 +3551,24 @@
                 }
             }
             
-            // 繪製 SVG 連接線的函數（優化版本）
-            function drawGeneKeyLines() {
-                // 使用 requestAnimationFrame 優化性能
-                requestAnimationFrame(() => {
-                // 清除之前的連線
-                svg.innerHTML = '';
-                
-                // 獲取 containerWrapper 元素（通過查找包含 SVG 的父元素）
-                const svgParent = svg.parentElement;
-                if (!svgParent) {
-                    console.warn('找不到 SVG 的父元素');
-                    return;
-                }
-                
-                    // 獲取 SVG 和父容器的實際位置和尺寸
-                    const svgRect = svg.getBoundingClientRect();
-                    const svgParentRect = svgParent.getBoundingClientRect();
-                    
-                    // 獲取實際的 SVG 尺寸（考慮縮放）
-                    const svgWidth = svgRect.width || 900;
-                    const svgHeight = svgRect.height || 900;
-                    
-                    // 計算縮放比例（考慮瀏覽器縮放和 CSS transform）
-                    const scaleX = svgWidth / 900; // 基準寬度是 900px
-                    const scaleY = svgHeight / 900; // 基準高度是 900px
-                    
-                    // 確保 SVG 有正確的視口尺寸和 viewBox
-                    svg.setAttribute('viewBox', `0 0 900 900`);
-                    svg.setAttribute('width', svgWidth);
-                    svg.setAttribute('height', svgHeight);
-                    svg.setAttribute('preserveAspectRatio', 'none'); // 允許非等比縮放
-                
-                // 重新計算所有節點的實際中心位置（基於 DOM 元素）
-                const actualPositions = {};
-                    let allNodesReady = true;
-                    
-                geneKeyNodes.forEach(node => {
-                    const nodeEl = document.getElementById(`gene-key-${node.id}`);
-                    if (nodeEl && svgParent) {
-                            // 獲取節點的實際位置（考慮所有變換）
-                        const nodeRect = nodeEl.getBoundingClientRect();
-                            
-                            // 計算相對於 SVG 父容器的座標（球體圓心）
-                            // 使用 SVG 父容器的左上角作為原點
-                            let relativeX = nodeRect.left - svgParentRect.left + nodeRect.width / 2;
-                            let relativeY = nodeRect.top - svgParentRect.top + nodeRect.height / 2;
-                            
-                            // 獲取 SVG 父容器的實際尺寸（考慮縮放）
-                            const parentWidth = svgParentRect.width || 900;
-                            const parentHeight = svgParentRect.height || 900;
-                            
-                            // 將實際像素座標轉換到 SVG 的 viewBox 座標系統（0-900）
-                            // 這樣無論如何縮放，座標都會正確對應
-                            relativeX = (relativeX / parentWidth) * 900;
-                            relativeY = (relativeY / parentHeight) * 900;
-                            
-                            // 驗證位置是否有效（允許負值，因為可能會有 transform）
-                            if (!isNaN(relativeX) && !isNaN(relativeY) && 
-                                isFinite(relativeX) && isFinite(relativeY)) {
-                        actualPositions[node.id] = {
-                                    x: Math.round(relativeX * 100) / 100, // 四捨五入到小數點後兩位
-                                    y: Math.round(relativeY * 100) / 100
-                        };
-                            } else {
-                                // 如果位置無效，使用預設位置
-                                actualPositions[node.id] = nodePositions[node.id];
-                                allNodesReady = false;
-                            }
-                    } else {
-                        // 如果 DOM 還沒渲染，使用計算的座標
-                        actualPositions[node.id] = nodePositions[node.id];
-                            allNodesReady = false;
-                        }
-                    });
-                    
-                    // 如果節點還沒完全渲染，延遲重試
-                    if (!allNodesReady) {
-                        setTimeout(() => {
-                            drawGeneKeyLines();
-                        }, 100);
-                        return;
-                    }
-                
-                // 繪製 SVG 連接線（使用 path 元素）
-                    let drawnCount = 0;
-                connections.forEach(conn => {
-                        const fromPos = actualPositions[conn.from];
-                        const toPos = actualPositions[conn.to];
-                    
-                    if (!fromPos || !toPos) {
-                        console.warn(`找不到節點位置: ${conn.from} -> ${conn.to}`);
-                        return;
-                    }
-                        
-                        // 檢查當前過濾狀態，決定是否繪製此連線
-                        if (currentFilterSequence !== 'all' && conn.sequence !== currentFilterSequence) {
-                            // 如果當前有過濾且此連線不匹配，跳過繪製
-                            return;
-                        }
-                        
-                        // 驗證位置是否有效
-                        if (isNaN(fromPos.x) || isNaN(fromPos.y) || isNaN(toPos.x) || isNaN(toPos.y)) {
-                            console.warn(`無效的節點位置: ${conn.from} -> ${conn.to}`);
-                        return;
-                    }
-                    
-                    // 創建 SVG path 元素
-                    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                    
-                    // 使用簡單的直線連接球體圓心
-                    const d = `M ${fromPos.x} ${fromPos.y} L ${toPos.x} ${toPos.y}`;
-                    path.setAttribute('d', d);
-                    path.setAttribute('class', `gene-key-path gene-key-path-${conn.color}`);
-                        
-                        // 設置序列屬性（用於過濾）
-                        if (conn.sequence) {
-                            path.setAttribute('data-sequence', conn.sequence);
-                        }
-                        
-                    path.setAttribute('stroke', getConnectionColor(conn.color));
-                    path.setAttribute('stroke-width', '4');
-                    path.setAttribute('stroke-opacity', '0.5');
-                    path.setAttribute('fill', 'none');
-                    
-                    svg.appendChild(path);
-                        drawnCount++;
-                });
-                
-                    if (drawnCount > 0) {
-                        console.log('已繪製', drawnCount, '條連接線');
-                    }
-                });
-            }
-            
-            // 將 SVG 和 wrapper 放入容器
-            const containerWrapper = document.createElement('div');
-            containerWrapper.style.position = 'relative';
-            containerWrapper.className = 'gene-keys-container-wrapper';
-            
-            // 尺寸由 CSS 控制，手機版會自動調整
-            // 不設置 inline style，讓 CSS 的 !important 規則生效
-            if (window.innerWidth > 768) {
-            containerWrapper.style.width = '900px';
-            containerWrapper.style.height = '900px';
-                containerWrapper.style.margin = '0 auto';
-            }
-            // 手機版完全由 CSS 控制
-            
-            // 先添加 SVG（底層）
-            containerWrapper.appendChild(svg);
-            // 再添加 wrapper（上層）
-            containerWrapper.appendChild(wrapper);
-            
-            container.innerHTML = '';
-            container.appendChild(containerWrapper);
-            section.style.display = 'block';
-            
-            // 在所有節點渲染完成後繪製連線（延遲更長以確保 DOM 完全渲染）
-            // 使用多個延遲確保所有元素都已渲染
-            setTimeout(() => {
-                drawGeneKeyLines();
-            }, 300);
-            
-            // 備用：如果第一次繪製失敗，再次嘗試
-            setTimeout(() => {
-                const paths = svg.querySelectorAll('path');
-                if (paths.length === 0) {
-                    console.log('連線未繪製，重新嘗試...');
-                    drawGeneKeyLines();
-                }
-            }, 600);
-
-            // 監聽視窗大小變化和滾動事件，重新繪製連線
-            let resizeTimeout;
-            let scrollTimeout;
-            
-            const handleResize = () => {
-                clearTimeout(resizeTimeout);
-                resizeTimeout = setTimeout(() => {
-                    // 重新繪製連線（延遲更長以確保布局穩定）
-                    drawGeneKeyLines();
-                    console.log('視窗大小改變，重新繪製連線');
-                }, 300);
-            };
-            
-            // 監聽滾動事件（手機版需要，使用防抖優化）
-            let isScrolling = false;
-            const handleScroll = () => {
-                if (isScrolling) return;
-                
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    // 手機版滾動時重新計算連線位置
-                    if (window.innerWidth <= 768) {
-                        isScrolling = true;
-                        drawGeneKeyLines();
-                        // 滾動結束後重置標記
-                        setTimeout(() => {
-                            isScrolling = false;
-            }, 200);
-        }
-                }, 150);
-            };
-
-            // 添加 resize 事件監聽器
-            window.addEventListener('resize', handleResize);
-
-            // 監聽螢幕方向變化（手機旋轉）
-            window.addEventListener('orientationchange', () => {
-                setTimeout(handleResize, 300);
-            });
-            
-            // 監聽滾動事件（手機版需要，確保線條位置正確）
-            const geneKeysContainer = document.getElementById('gene-keys-container');
-            if (geneKeysContainer) {
-                geneKeysContainer.addEventListener('scroll', handleScroll, { passive: true });
-            }
-            
-            // 也監聽整個視窗的滾動（以防萬一）
-            window.addEventListener('scroll', handleScroll, { passive: true });
-
-            // 監聽縮放事件（當用戶縮放時重新繪製連線）
-            let lastZoomLevel = window.devicePixelRatio || 1;
-            let lastViewportScale = 1;
-            
-            const checkZoom = () => {
-                // 檢查瀏覽器縮放
-                const currentZoom = window.devicePixelRatio || 1;
-                let zoomChanged = false;
-                
-                // 檢查視覺視口縮放（如果支援）
-                if (window.visualViewport) {
-                    const currentScale = window.visualViewport.scale || 1;
-                    if (Math.abs(currentScale - lastViewportScale) > 0.01) {
-                        lastViewportScale = currentScale;
-                        zoomChanged = true;
-                    }
-                }
-                
-                // 檢查設備像素比變化
-                if (Math.abs(currentZoom - lastZoomLevel) > 0.1) {
-                    lastZoomLevel = currentZoom;
-                    zoomChanged = true;
-                }
-                
-                if (zoomChanged) {
-                    // 延遲重繪以確保布局穩定
-                    setTimeout(() => {
-                        drawGeneKeyLines();
-                        console.log('檢測到縮放變化，重新繪製連線');
-                    }, 150);
-                }
-            };
-            
-            // 使用視覺視口 API 監聽縮放（如果支援）
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', () => {
-                    setTimeout(() => {
-                        drawGeneKeyLines();
-                        checkZoom();
-                    }, 100);
-                });
-                
-                window.visualViewport.addEventListener('scroll', () => {
-                    // 滾動時也重新繪製（手機縮放時可能需要）
-                    setTimeout(() => {
-                        drawGeneKeyLines();
-                    }, 50);
-                });
-            }
-            
-            // 監聽頁面縮放事件（使用 ResizeObserver 更準確）
-            let resizeObserver = null;
-            try {
-                resizeObserver = new ResizeObserver(entries => {
-                    for (let entry of entries) {
-                        // 檢查尺寸變化是否由縮放引起
-                        setTimeout(() => {
-                            drawGeneKeyLines();
-                        }, 100);
-                    }
-                });
-                
-                // 觀察 SVG 父容器的尺寸變化
-                if (svgParent) {
-                    resizeObserver.observe(svgParent);
-                }
-            } catch (e) {
-                console.warn('ResizeObserver 不支援，使用備用方案');
-            }
-            
-            // 定期檢查縮放變化（備用方案，降低頻率以提升性能）
-            setInterval(checkZoom, 1000);
-
-            // 將 drawGeneKeyLines 暴露給全域，以便其他地方可以調用
+            // 將 drawGeneKeyLines 暴露給全域，以便過濾功能可以調用
             window.redrawGeneKeyLines = drawGeneKeyLines;
 
             // ==================== 過濾功能 ====================
-            
-            // 保存當前過濾狀態
-            let currentFilterSequence = 'all';
-            
+            // currentFilterSequence 已在上方宣告，此處僅重置為 'all'
+            currentFilterSequence = 'all';
+
             // 過濾函數：根據選擇的序列顯示/隱藏球體和連線
             function filterGeneKeys(sequence) {
                 // 保存當前過濾狀態
                 currentFilterSequence = sequence;
                 
-                // 獲取所有球體和連線
+                // 獲取所有球體和連線（包括 SVG 內的）
                 const allSpheres = document.querySelectorAll('.gene-key-sphere');
                 const allPaths = document.querySelectorAll('.gene-key-path');
+                
+                // 重新繪製連接線（使用新的過濾狀態）
+                drawGeneKeyLines();
                 
                 allSpheres.forEach(sphere => {
                     // 檢查是否屬於當前序列
@@ -4314,14 +4293,21 @@
                 });
             }
             
-            // 初始化縣市選單（如果已選擇地區）
-            initializeCountySelect();
-            
+            // 延遲初始化縣市選單（讓瀏覽器有機會還原表單狀態後再根據地區填充）
+            setTimeout(function() { initializeCountySelect(); }, 0);
+
             // 設置事件監聽器
             const countySelect = document.getElementById('county');
             const districtSelect = document.getElementById('district');
-            
+
             if (countySelect && districtSelect) {
+                // 點擊縣市下拉時：若已選地區但縣市仍是「請先選擇地區」，則重新填充（避免事件未觸發）
+                countySelect.addEventListener('focus', function() {
+                    const regionSelect = document.getElementById('region');
+                    if (regionSelect && regionSelect.value && this.options.length <= 1) {
+                        initializeCountySelect();
+                    }
+                });
                 // 縣市選擇變更事件
                 countySelect.addEventListener('change', function() {
                     const county = this.value;

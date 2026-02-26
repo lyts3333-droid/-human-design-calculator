@@ -38,3 +38,5 @@ echo 瀏覽器已打開，請開始測試
 echo.
 pause
 
+
+
