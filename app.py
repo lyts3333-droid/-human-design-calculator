@@ -57,10 +57,11 @@ if not IS_VERCEL:
     login_manager.login_view = 'login'
     login_manager.session_protection = 'strong'
 else:
-    # Vercel 環境：創建假的對象避免導入錯誤
+    # Vercel 環境：無數據庫，但仍須初始化 Flask-Login 以免 current_user 等使用時崩潰
     db = None
-    login_manager = None
-    print("[INFO] Vercel 環境：跳過數據庫和登錄管理器初始化")
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    print("[INFO] Vercel 環境：數據庫已禁用，登錄為匿名")
 
 # ==================== 數據庫模型 ====================
 
@@ -121,10 +122,17 @@ if not IS_VERCEL:
             }
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    """載入用戶（Flask-Login 需要）"""
-    return User.query.get(int(user_id))
+# 註冊 user_loader：非 Vercel 用 DB 查詢；Vercel 固定回傳 None（匿名）
+if login_manager is not None:
+    if not IS_VERCEL:
+        @login_manager.user_loader
+        def load_user(user_id):
+            """載入用戶（Flask-Login 需要）"""
+            return User.query.get(int(user_id))
+    else:
+        @login_manager.user_loader
+        def load_user(user_id):
+            return None  # Vercel 無 DB，一律匿名
 
 
 # ==================== 數據庫初始化 ====================

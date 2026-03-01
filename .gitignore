@@ -63,3 +63,6 @@ human_design_simplified.py
 # Netlify Function 有自己的 requirements.txt（如果還需要的話）
 !netlify/functions/**/requirements.txt
 
+
+.vercel
+.env*.local

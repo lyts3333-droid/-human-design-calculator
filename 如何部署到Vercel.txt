@@ -1,0 +1,19 @@
+若雙擊 .bat / .cmd 沒反應，請用以下方式之一：
+
+方法一：從「命令提示字元」執行
+  1. 按 Win+R，輸入 cmd，按 Enter
+  2. 輸入（把路徑改成你的專案資料夾）：
+     cd /d "C:\Users\a0929\OneDrive\桌面\CURSOR\人類圖"
+  3. 輸入下面其中一個後按 Enter：
+     run_deploy.cmd
+     或
+     deploy_vercel.bat
+
+方法二：右鍵選「以系統管理員身分執行」
+  對 run_deploy.cmd 或 deploy_vercel.bat 按右鍵
+  → 選「以系統管理員身分執行」
+
+方法三：測試是否有執行
+  雙擊 test_run.bat
+  → 若出現黑視窗並顯示 "If you see this, batch file is running." 表示 .bat 可執行
+  → 若完全沒反應，可能是此資料夾的 .bat 被系統或 OneDrive 限制，請用方法一
