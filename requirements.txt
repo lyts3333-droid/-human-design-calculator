@@ -8,3 +8,4 @@ pyswisseph
 pytz==2024.1
 gunicorn
 pandas
+psycopg2-binary
