@@ -4019,7 +4019,7 @@
         // 載入歷史記錄到表單
         async function loadHistoryRecord(recordId) {
             const records = await getHistoryRecords();
-            const record = records.find(r => r.id === recordId);
+            const record = records.find(r => r.id == recordId);
             
             if (!record) {
                 showMessage('找不到記錄', 'error');
