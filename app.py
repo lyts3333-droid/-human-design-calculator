@@ -1670,6 +1670,7 @@ def _ensure_line_webhook_registered() -> bool:
 
 
 @app.route("/callback", methods=["GET", "POST"], strict_slashes=False)
+@app.route("/api/line/callback", methods=["GET", "POST"], strict_slashes=False)
 def line_callback():
     """
     LINE Messaging API Webhook。

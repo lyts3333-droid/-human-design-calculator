@@ -12,10 +12,11 @@
     }
   ],
   "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "app.py"
-    }
+    { "src": "/callback", "dest": "app.py" },
+    { "src": "/callback/", "dest": "app.py" },
+    { "src": "/api/line/callback", "dest": "app.py" },
+    { "src": "/api/line/callback/", "dest": "app.py" },
+    { "src": "/(.*)", "dest": "app.py" }
   ],
   "env": {
     "VERCEL": "1",
