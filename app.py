@@ -12,7 +12,9 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import hashlib
-from typing import Dict, Tuple, List, Optional
+import re
+from typing import Any, Dict, List, Optional, Tuple
+
 import swisseph as swe
 import pytz
 import os
@@ -909,71 +911,44 @@ def simulate_gate_activations(date_time: datetime.datetime) -> Dict[str, bool]:
 
 
 def determine_type(
-    defined_centers: Dict[str, bool], 
+    defined_centers: Dict[str, bool],
     defined_channels: List[Tuple[int, int]] = None
 ) -> Tuple[str, str]:
     """
-    根據九大中心的定義狀態，判斷人類圖類型。
-    
-    判斷規則:
-    1. Reflector（反映者）: 所有中心都未定義。策略：等待月亮週期28天
-    2. Generator（生產者）: 薦骨中心有定義，且動力中心未連接到喉嚨。策略：等待回應
-    3. Manifesting Generator（顯示型生產者）: 薦骨有定義，且動力中心連接到喉嚨。策略：先告知再行動，等待回應
-    4. Manifestor（顯示者）: 薦骨無定義，但動力中心連接到喉嚨。策略：告知
-    5. Projector（投射者）: 薦骨無定義，且沒有動力中心連接到喉嚨。策略：等待被邀請
-    
-    參數:
-        defined_centers: 能量中心定義狀態字典
-        defined_channels: 定義的通道列表（可選，用於更精確的判斷）
-    
-    返回:
-        (類型名稱, 策略) 元組
+    人類圖類型 (Type)：根據定義中心（Defined Centers）判斷。
+    顯示者、生產者、顯示型生產者、投射者、反映者。
     """
-    sacral_defined = defined_centers.get("Sacral", False)
-    throat_defined = defined_centers.get("Throat", False)
-    
     # 1. 反映者 (Reflector): 所有中心都未定義
     if not any(defined_centers.values()):
         return "反映者", "等待月亮週期28天"
-    
-    # 檢查喉嚨是否連接到動力中心
-    # 簡化判斷：如果喉嚨和任一動力中心都定義，視為有連接
-    # 真實情況下應該檢查通道連接
-    throat_to_motor = False
-    if throat_defined:
+
+    sacral_defined = defined_centers.get("Sacral", False)
+    # 喉嚨是否經由「已定義通道」與動力中心連通（更精確的判斷）
+    throat_to_motor = _is_throat_connected_to_motor(
+        defined_centers, defined_channels or []
+    )
+    if not throat_to_motor and defined_centers.get("Throat", False):
         for motor in MOTOR_CENTERS:
             if defined_centers.get(motor, False):
                 throat_to_motor = True
                 break
-    
-    # 2. 生產者/顯示型生產者 (Generator/Manifesting Generator): 薦骨中心有定義
+
+    # 2. 生產者 / 顯示型生產者：薦骨有定義
     if sacral_defined:
         if throat_to_motor:
-            return "顯示型生產者", "先告知再行動，等待回應"
-        else:
-            return "生產者", "等待回應"
-    
-    # 3. 顯示者/投射者 (Manifestor/Projector): 薦骨中心未定義
-    else:
-        if throat_to_motor:
-            return "顯示者", "告知"
-        else:
-            return "投射者", "等待被邀請"
+            return "顯示型生產者", "等待回應"
+        return "生產者", "等待回應"
+
+    # 3. 顯示者 / 投射者：薦骨未定義
+    if throat_to_motor:
+        return "顯示者", "告知"
+    return "投射者", "等待被邀請"
 
 
 def calculate_profile(personality_sun_line: int, design_sun_line: int) -> str:
     """
-    計算人生角色 (Profile)
-    
-    根據意識太陽的爻線與潛意識太陽的爻線組合
-    例如：6.6 與 15.2 組合為 '6/2'
-    
-    參數:
-        personality_sun_line: 意識太陽的爻線（1-6）
-        design_sun_line: 潛意識太陽的爻線（1-6）
-    
-    返回:
-        人生角色字符串，格式為 'X/Y'（例如：'6/2'）
+    人生角色 (Profile)：根據『意識太陽』與『潛意識太陽』的爻線（小數點後的數字）組合。
+    例如 10.1 與 25.5 → 爻線 1 與 5 → 人生角色 1/5。
     """
     return f"{personality_sun_line}/{design_sun_line}"
 
@@ -1053,6 +1028,22 @@ GATE_TO_CENTER = {
     58: "Root", 38: "Root", 54: "Root",
 }
 
+
+def get_defined_centers_from_gates(personality_list: List[Dict], design_list: List[Dict]) -> Dict[str, bool]:
+    """根據行星列表中的閘門，計算各能量中心是否被定義（有閘門激活即為定義）"""
+    activated_gates = set()
+    for p in (personality_list or []) + (design_list or []):
+        g = p.get('gate')
+        if g is not None:
+            activated_gates.add(g)
+    defined_centers = {c: False for c in CENTERS}
+    for gate in activated_gates:
+        center = GATE_TO_CENTER.get(gate)
+        if center:
+            defined_centers[center] = True
+    return defined_centers
+
+
 def calculate_defined_channels_from_gates(personality_list: List[Dict], design_list: List[Dict]) -> List[Tuple[int, int]]:
     """
     根據行星列表中的閘門激活情況，計算已定義的通道
@@ -1087,6 +1078,34 @@ def calculate_defined_channels_from_gates(personality_list: List[Dict], design_l
                 defined_channels.append(channel)
     
     return defined_channels
+
+
+def _is_throat_connected_to_motor(
+    defined_centers: Dict[str, bool],
+    defined_channels: List[Tuple[int, int]]
+) -> bool:
+    """檢查喉嚨中心是否經由已定義通道與任一動力中心（Ego、Solar_Plexus、Root）連通。"""
+    if not defined_channels:
+        return False
+    channel_to_centers = {}
+    for (g1, g2), (c1, c2) in HUMAN_DESIGN_CHANNELS.items():
+        key = (min(g1, g2), max(g1, g2))
+        channel_to_centers[key] = (c1, c2)
+    throat = "Throat"
+    motors = ("Ego", "Solar_Plexus", "Root")
+    for ch in defined_channels:
+        key = (min(ch[0], ch[1]), max(ch[0], ch[1]))
+        if key not in channel_to_centers:
+            continue
+        c1, c2 = channel_to_centers[key]
+        if throat not in (c1, c2):
+            continue
+        if not defined_centers.get(throat, False):
+            continue
+        other = c2 if c1 == throat else c1
+        if other in motors and defined_centers.get(other, False):
+            return True
+    return False
 
 
 def calculate_decision_mode(defined_centers: Dict[str, bool], defined_channels: List[Tuple[int, int]] = None,
@@ -1186,61 +1205,37 @@ def calculate_decision_mode(defined_centers: Dict[str, bool], defined_channels: 
 
 def determine_authority(defined_centers: Dict[str, bool]) -> str:
     """
-    根據九大中心的定義優先級，判斷內在權威。
-    
-    判斷規則（按優先順序）:
-    1. 情緒權威: Solar_Plexus 中心被定義
-    2. 薦骨權威: Solar_Plexus 未定義，但 Sacral 中心被定義
-    3. 脾中心權威: 上述都未定義，但 Spleen 中心被定義
-    4. 自我權威: 上述都未定義，但 Ego（心臟）中心被定義
-    5. G中心權威: 上述都未定義，但 G 中心被定義
-    6. 環境權威: 如果以上都沒有定義（通常對應 Reflector）
-    
-    參數:
-        defined_centers: 能量中心定義狀態字典
-    
-    返回:
-        內在權威描述字符串
+    內在權威 (Authority)：根據中心定義的層級判斷。
+    優先順序：情緒 → 薦骨 → 直覺(脾) → 意志(心臟/Ego) → 自我(G) → 環境；若皆無則為環境/無。
     """
     # 優先級 1: 情緒權威（最高優先級）
     if defined_centers.get("Solar_Plexus", False):
-        return "情緒權威：等待情緒波動平息後再做決定"
+        return "情緒權威"
     
     # 優先級 2: 薦骨權威
     if defined_centers.get("Sacral", False):
-        return "薦骨權威：信任身體的薦骨回應（「嗯嗯」或「嗯哼」）"
+        return "薦骨權威"
     
     # 優先級 3: 脾中心權威
     if defined_centers.get("Spleen", False):
-        return "脾中心權威：信任當下的直覺和身體感受"
+        return "脾中心權威"
     
     # 優先級 4: 自我權威（Ego/Heart 中心）
     if defined_centers.get("Ego", False):
-        return "自我/意志力權威：從意志力中心獲得力量和承諾"
+        return "自我/意志力權威"
     
     # 優先級 5: G中心權威（自我投射）
     if defined_centers.get("G", False):
-        return "自我投射權威：通過表達和傾聽自己來獲得清晰度"
+        return "自我投射權威"
     
     # 優先級 6: 環境權威（如果沒有內在權威，通常是 Reflector）
-    return "環境/月球權威：需要等待28天的月球週期或尋求環境指引"
+    return "環境/月球權威"
 
 
 def get_not_self_theme(type_name: str) -> str:
     """
-    根據類型返回對應的非自己主題 (Not-Self Theme)
-    
-    規則（嚴格對應）：
-    - 生產者 (Generator) / 顯示型生產者 (Manifesting Generator) → 挫敗 (Frustration)
-    - 顯示者 (Manifestor) → 憤怒 (Anger)
-    - 投射者 (Projector) → 苦澀 (Bitterness)
-    - 反映者 (Reflector) → 失望 (Disappointment)
-    
-    參數:
-        type_name: 類型名稱字符串
-    
-    返回:
-        非自己主題字符串
+    非自己主題 (Not-Self Theme)：根據類型對應。
+    生產者/顯示型生產者→挫敗、顯示者→憤怒、投射者→苦澀、反映者→失望。
     """
     # 嚴格按照類型對應（按優先順序檢查）
     if '反映者' in type_name or 'Reflector' in type_name:
@@ -1252,8 +1247,40 @@ def get_not_self_theme(type_name: str) -> str:
     elif '生產者' in type_name or 'Generator' in type_name:
         return "挫敗"
     else:
-        # 默認值
         return "未知"
+
+
+def compute_human_design_core_attributes(
+    personality_list: List[Dict],
+    design_list: List[Dict]
+) -> Dict:
+    """
+    根據行星數據計算人類圖核心屬性，供前端顯示。
+    依序計算：定義中心與通道 → 類型與策略 → 決策模式 → 內在權威 → 非自己主題；
+    人生角色由意識太陽與潛意識太陽的爻線組合。
+    回傳：type_name, profile, strategy, decision_mode, authority, not_self_theme。
+    """
+    defined_centers = get_defined_centers_from_gates(personality_list, design_list)
+    defined_channels = calculate_defined_channels_from_gates(personality_list, design_list)
+    type_name, strategy = determine_type(defined_centers, defined_channels)
+    decision_mode = calculate_decision_mode(
+        defined_centers, defined_channels=defined_channels
+    )
+    authority = determine_authority(defined_centers)
+    not_self_theme = get_not_self_theme(type_name)
+    personality_sun = next((p for p in personality_list if p.get("planet") == "Sun"), None)
+    design_sun = next((p for p in design_list if p.get("planet") == "Sun"), None)
+    personality_sun_line = int(personality_sun.get("line", 1)) if personality_sun else 1
+    design_sun_line = int(design_sun.get("line", 1)) if design_sun else 1
+    profile = calculate_profile(personality_sun_line, design_sun_line)
+    return {
+        "profile": profile,
+        "type_name": type_name,
+        "strategy": strategy,
+        "decision_mode": decision_mode,
+        "authority": authority,
+        "not_self_theme": not_self_theme,
+    }
 
 
 def calculate_human_design(year: int, month: int, day: int, time_str: str, 
@@ -1273,11 +1300,16 @@ def calculate_human_design(year: int, month: int, day: int, time_str: str,
                       如果為 None，則使用經度估算時區
     
     返回:
-        包含計算結果的字典，包括：
-        - input_date: 輸入的日期時間字符串
-        - personality_list: 意識層（Personality）行星列表
-        - design_list: 設計層（Design）行星列表
-        - error: 錯誤信息（如果有）
+        包含計算結果的字典，供前端顯示：
+        - input_date: 輸入的日期時間
+        - personality_list, design_list: 行星數據
+        - profile: 人生角色（意識太陽爻/潛意識太陽爻）
+        - type_name: 人類圖類型（顯示者/生產者/顯示型生產者/投射者/反映者）
+        - strategy: 人生策略
+        - decision_mode: 決策模式
+        - authority: 內在權威
+        - not_self_theme: 非自己主題
+        - error: 若有錯誤
     """
     try:
         # 解析時間字符串
@@ -1313,13 +1345,20 @@ def calculate_human_design(year: int, month: int, day: int, time_str: str,
         personality_list = generate_personality_list(date_time)
         design_list = generate_design_list(date_time)
     
-    # 輸出結果（只保留輸入數據和行星信息）
+    # 根據行星數據計算人類圖核心屬性並回傳給前端（供分析結果區塊顯示）
+    core = compute_human_design_core_attributes(personality_list, design_list)
     result = {
         "input_date": date_time.strftime("%Y-%m-%d %H:%M"),
-        "personality_list": personality_list,  # 意識層（黑色）- 13個行星
-        "design_list": design_list  # 設計層（紅色）- 13個行星
+        "personality_list": personality_list,
+        "design_list": design_list,
+        "profile": core["profile"],
+        "type": core["type_name"],
+        "type_name": core["type_name"],
+        "strategy": core["strategy"],
+        "decision_mode": core["decision_mode"],
+        "authority": core["authority"],
+        "not_self_theme": core["not_self_theme"],
     }
-    
     return result
 
 # ==================== Flask 路由 ====================
@@ -1410,6 +1449,315 @@ def get_gene_key(gate):
     except Exception as e:
         print(f"[ERROR] 查詢基因天命數據失敗: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
+
+def _parse_birth_date_time_for_api(birth_date: str, birth_time: str) -> Tuple[int, int, int, str]:
+    """
+    解析 API 參數 birth_date (YYYY-MM-DD)、birth_time (HH:mm 或 H:mm)。
+    回傳 (year, month, day, time_str) 其中 time_str 為 "HH:MM"。
+    """
+    if not birth_date or not isinstance(birth_date, str):
+        raise ValueError("birth_date 為必填，格式須為 YYYY-MM-DD")
+    if not birth_time or not isinstance(birth_time, str):
+        raise ValueError("birth_time 為必填，格式須為 HH:mm")
+    birth_date = birth_date.strip()
+    birth_time = birth_time.strip()
+    try:
+        d = datetime.datetime.strptime(birth_date, "%Y-%m-%d")
+    except ValueError as e:
+        raise ValueError(f"birth_date 格式須為 YYYY-MM-DD: {e}") from e
+    if ":" not in birth_time:
+        raise ValueError("birth_time 格式須為 HH:mm")
+    parts = birth_time.split(":")
+    if len(parts) < 2:
+        raise ValueError("birth_time 格式須為 HH:mm")
+    try:
+        hour = int(parts[0])
+        minute = int(parts[1])
+    except (ValueError, TypeError) as e:
+        raise ValueError("birth_time 的小時與分鐘須為整數") from e
+    if not (0 <= hour < 24 and 0 <= minute < 60):
+        raise ValueError("birth_time 超出有效範圍（時 0–23、分 0–59）")
+    time_str = f"{hour:02d}:{minute:02d}"
+    return d.year, d.month, d.day, time_str
+
+
+def _personality_sun_gate(personality_list: List[Dict]) -> Optional[int]:
+    """意識太陽（黑太陽）閘門，作為主要基因天命編號（Life's Work）。"""
+    for p in personality_list:
+        if p.get("planet") == "Sun" and p.get("gate") is not None:
+            try:
+                return int(p["gate"])
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
+def run_birth_chart_calculation(
+    birth_date: str,
+    birth_time: str,
+    timezone_str: Optional[str] = None,
+    longitude: float = 0.0,
+    latitude: float = 0.0,
+) -> Tuple[Optional[Dict], Optional[str]]:
+    """
+    內部計算：人類圖 + 意識太陽閘門對應基因天命（gene_keys.csv）。
+    成功回傳 (payload_dict, None)；失敗回傳 (None, error_message)。
+    payload 結構與 /api/calculate 成功回應相同（含 status: success）。
+    """
+    try:
+        year, month, day, time_str = _parse_birth_date_time_for_api(birth_date, birth_time)
+    except ValueError as e:
+        return None, str(e)
+
+    hd = calculate_human_design(
+        year, month, day, time_str, longitude, latitude, timezone_str
+    )
+    if hd.get("error"):
+        return None, str(hd["error"])
+
+    personality_list = hd.get("personality_list") or []
+    main_gate = _personality_sun_gate(personality_list)
+    if main_gate is None:
+        return None, "無法從計算結果取得意識太陽（黑太陽）閘門"
+
+    gk_map = load_gene_keys_data()
+    gk_row = gk_map.get(main_gate) if gk_map else None
+
+    if gk_row:
+        shadow = str(gk_row.get("shadow", "") or "")
+        gift = str(gk_row.get("gift", "") or "")
+        siddhi = str(gk_row.get("siddhi", "") or "")
+    else:
+        shadow = gift = siddhi = ""
+
+    payload = {
+        "status": "success",
+        "主要基因天命編號": main_gate,
+        "shadow": shadow,
+        "gift": gift,
+        "siddhi": siddhi,
+        "human_design": {
+            "input_date": hd.get("input_date"),
+            "profile": hd.get("profile"),
+            "type": hd.get("type_name"),
+            "strategy": hd.get("strategy"),
+            "decision_mode": hd.get("decision_mode"),
+            "authority": hd.get("authority"),
+            "not_self_theme": hd.get("not_self_theme"),
+        },
+    }
+    return payload, None
+
+
+# LINE 使用者輸入：西元日期 + 空白 + 時間（與範例「1990-09-21 12:00」一致）
+LINE_BIRTH_INPUT_PATTERN = re.compile(
+    r"^\s*(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})\s*$"
+)
+
+_LINE_HELP_TEXT = (
+    "請輸入生日與時間，格式如下（西元年-月-日，接一個空白，再接 24 小時制時:分）：\n"
+    "範例：1990-09-21 12:00\n"
+    "※ 月、日請補零（例如 09、21）。"
+)
+
+_line_bot_api_global: Any = None
+_line_webhook_handler: Any = None
+_line_sdk_import_error: Optional[str] = None
+
+
+def _truncate_for_line(text: str, max_len: int = 900) -> str:
+    if not text or len(text) <= max_len:
+        return text or ""
+    return text[: max_len - 1] + "…"
+
+
+def _format_birth_result_for_line(payload: Dict) -> str:
+    """將 run_birth_chart_calculation 結果整理成 LINE 易讀文字。"""
+    hd = payload.get("human_design") or {}
+    lines = [
+        "【人類圖／基因天命 計算結果】",
+        f"輸入時間：{hd.get('input_date', '—')}",
+        "",
+        "── 人類圖摘要 ──",
+        f"人生角色：{hd.get('profile', '—')}",
+        f"類型：{hd.get('type', '—')}",
+        f"人生策略：{hd.get('strategy', '—')}",
+        f"決策模式：{hd.get('decision_mode', '—')}",
+        f"內在權威：{hd.get('authority', '—')}",
+        f"非自己主題：{hd.get('not_self_theme', '—')}",
+        "",
+        "── 主要基因天命（意識太陽閘門）──",
+        f"閘門編號：{payload.get('主要基因天命編號', '—')}",
+        "",
+        "【陰影 Shadow】",
+        _truncate_for_line(str(payload.get("shadow", "") or "")),
+        "",
+        "【天賦 Gift】",
+        _truncate_for_line(str(payload.get("gift", "") or "")),
+        "",
+        "【悉地 Siddhi】",
+        _truncate_for_line(str(payload.get("siddhi", "") or "")),
+    ]
+    out = "\n".join(lines)
+    if len(out) > 4800:
+        out = out[:4799] + "…"
+    return out
+
+
+def _process_line_text_message(event: Any, line_bot_api: Any) -> None:
+    from linebot.models import TextSendMessage
+
+    raw = (event.message.text or "").strip()
+    m = LINE_BIRTH_INPUT_PATTERN.match(raw)
+    if not m:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="格式不正確。\n\n" + _LINE_HELP_TEXT),
+        )
+        return
+
+    birth_date, birth_time = m.group(1), m.group(2)
+    tz = os.environ.get("LINE_DEFAULT_TIMEZONE") or os.environ.get("DEFAULT_TIMEZONE")
+    payload, err = run_birth_chart_calculation(
+        birth_date,
+        birth_time,
+        timezone_str=tz,
+        longitude=0.0,
+        latitude=0.0,
+    )
+    if err:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=f"計算時發生問題：{err}\n\n{_LINE_HELP_TEXT}"),
+        )
+        return
+
+    try:
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=_format_birth_result_for_line(payload)),
+        )
+    except Exception as e:
+        print(f"[ERROR] LINE reply_message 失敗: {e}")
+
+
+def _ensure_line_webhook_registered() -> bool:
+    """依環境變數建立 LineBotApi 與 WebhookHandler（僅一次）。延遲匯入 line-bot-sdk。"""
+    global _line_bot_api_global, _line_webhook_handler, _line_sdk_import_error
+    secret = os.environ.get("LINE_CHANNEL_SECRET")
+    token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+    if not secret or not token:
+        return False
+    if _line_webhook_handler is not None:
+        return True
+    try:
+        from linebot import LineBotApi, WebhookHandler
+        from linebot.models import MessageEvent, TextMessage
+    except ImportError as e:
+        _line_sdk_import_error = str(e)
+        print(f"[ERROR] line-bot-sdk 未安裝或匯入失敗: {e}")
+        return False
+
+    _line_bot_api_global = LineBotApi(token)
+    _line_webhook_handler = WebhookHandler(secret)
+
+    @_line_webhook_handler.add(MessageEvent, message=TextMessage)
+    def _on_line_text(event: Any):
+        _process_line_text_message(event, _line_bot_api_global)
+
+    return True
+
+
+@app.route("/callback", methods=["GET", "POST"], strict_slashes=False)
+def line_callback():
+    """
+    LINE Messaging API Webhook。
+    環境變數：LINE_CHANNEL_SECRET、LINE_CHANNEL_ACCESS_TOKEN（必填）
+    選填：LINE_DEFAULT_TIMEZONE 或 DEFAULT_TIMEZONE（例如 Asia/Taipei，傳入計算）
+
+    GET：回 200 供確認網址已部署（LINE 驗證仍須 POST）。
+    """
+    if request.method == "GET":
+        return (
+            "OK LINE webhook endpoint. Use POST for LINE Platform; "
+            "set LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN on Vercel.",
+            200,
+            {"Content-Type": "text/plain; charset=utf-8"},
+        )
+
+    if not _ensure_line_webhook_registered():
+        if _line_sdk_import_error:
+            return (
+                "line-bot-sdk import failed: " + _line_sdk_import_error,
+                503,
+                {"Content-Type": "text/plain; charset=utf-8"},
+            )
+        return (
+            "LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN must be set",
+            503,
+            {"Content-Type": "text/plain; charset=utf-8"},
+        )
+
+    from linebot.exceptions import InvalidSignatureError
+
+    signature = request.headers.get("X-Line-Signature", "")
+    body = request.get_data(as_text=True)
+    try:
+        if _line_webhook_handler is None:
+            return "LINE handler not initialized", 500
+        _line_webhook_handler.handle(body, signature)
+    except InvalidSignatureError:
+        return "Invalid signature", 400
+    except Exception as e:
+        print(f"[ERROR] /callback handle 失敗: {e}")
+        return "Internal error", 500
+    return "OK", 200
+
+
+@app.route("/api/calculate", methods=["POST"])
+def api_calculate():
+    """
+    統一計算人類圖與主要基因天命（意識太陽閘門對應 gene_keys.csv）。
+
+    POST JSON:
+        - birth_date: 必填，YYYY-MM-DD
+        - birth_time: 必填，HH:mm（24 小時制）
+        - timezone: 選填，例如 Asia/Taipei（與 /calculate_hd 相同）
+        - longitude, latitude: 選填，預設 0.0
+
+    成功時回傳 JSON（含主要基因天命編號、shadow / gift / siddhi），
+    並附上人類圖核心欄位摘要（不重複整份行星列表）。
+    """
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"status": "error", "error": "請提供 JSON 內容"}), 400
+
+        birth_date = data.get("birth_date")
+        birth_time = data.get("birth_time")
+        timezone_str = data.get("timezone")
+        try:
+            longitude = float(data.get("longitude", 0.0))
+            latitude = float(data.get("latitude", 0.0))
+        except (TypeError, ValueError):
+            return jsonify({"status": "error", "error": "longitude / latitude 須為數字"}), 400
+
+        payload, err = run_birth_chart_calculation(
+            str(birth_date) if birth_date is not None else "",
+            str(birth_time) if birth_time is not None else "",
+            timezone_str=timezone_str,
+            longitude=longitude,
+            latitude=latitude,
+        )
+        if err:
+            return jsonify({"status": "error", "error": err}), 400
+
+        return jsonify(payload), 200
+
+    except Exception as e:
+        print(f"[ERROR] /api/calculate 失敗: {e}")
+        return jsonify({"status": "error", "error": f"伺服器錯誤: {str(e)}"}), 500
 
 
 @app.route('/calculate_hd', methods=['POST'])

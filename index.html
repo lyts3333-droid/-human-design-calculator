@@ -235,13 +235,14 @@
             max-width: 100%; /* 確保可以使用全部寬度 */
         }
 
-        /* 讓「行星閘門與爻線」區塊跨越整個寬度並居中 */
+        /* 讓「行星閘門與爻線」區塊跨越整個寬度並整體置中 */
         .planet-gates-section {
             grid-column: 1 / -1;
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
+            box-sizing: border-box;
         }
 
         .planet-gates-section h2 {
@@ -289,16 +290,18 @@
             padding-bottom: 10px;
         }
 
-        /* Body Graph 容器樣式 - 使用 Grid 佈局（僅左右兩欄） */
+        /* Body Graph 容器樣式 - 三欄：潛意識 | 意識 | 分析結果；整體置中、視覺放大 1.2 倍 */
         #body-graph-container {
-            width: 100%;
-            max-width: 1200px;
+            width: 96%;
+            max-width: 1400px;
             height: auto;
             min-height: 600px;
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 20px;
             margin: 0 auto !important;
+            font-size: 1.2em;
+            box-sizing: border-box;
             background: 
                 linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%),
                 radial-gradient(circle at 20% 50%, rgba(100, 200, 255, 0.06) 0%, transparent 50%),
@@ -323,38 +326,41 @@
             position: relative;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
             #body-graph-container {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
                 grid-template-rows: auto auto;
+            }
+            #body-graph-container #analysis-sidebar {
+                grid-column: 1 / -1;
             }
         }
 
-        /* 側邊欄樣式 */
+        /* 側邊欄樣式：潛意識／意識整體縮小 */
         .planet-sidebar {
             display: flex;
             flex-direction: column;
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: 8px;
+            padding: 12px;
         }
 
         .sidebar-design {
-            background: #ffe6e6;  /* 淺紅底色 */
+            background: #ffe6e6;
             border: 2px solid #ff9999;
         }
 
         .sidebar-personality {
-            background: #f0f0f0;  /* 淺灰底色 */
+            background: #f0f0f0;
             border: 2px solid #cccccc;
         }
 
-        .sidebar-title {
-            font-size: 1.6em;
+        .planet-sidebar .sidebar-title {
+            font-size: 1.15em;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 18px;
-            padding: 13px;
-            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
             color: #333;
         }
 
@@ -369,29 +375,29 @@
         }
 
         /* 行星列表項 */
-        .planet-item {
+        .planet-sidebar .planet-item {
             display: flex;
             align-items: center;
-            padding: 14px 12px;
-            margin-bottom: 12px;
-            border-radius: 8px;
+            padding: 8px 6px;
+            margin-bottom: 6px;
+            border-radius: 6px;
             transition: background 0.2s;
-            font-size: 1.25em;
+            font-size: 1.05em;
         }
 
-        .planet-item:hover {
+        .planet-sidebar .planet-item:hover {
             background: rgba(255, 255, 255, 0.5);
         }
 
-        .planet-icon {
-            width: 42px;
-            height: 42px;
-            margin-right: 14px;
+        .planet-sidebar .planet-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1.6em;
+            font-size: 1.25em;
             border-radius: 50%;
             flex-shrink: 0;
             line-height: 1;
@@ -407,67 +413,150 @@
             color: #333;
         }
 
-        .planet-name {
-            flex: 0 0 90px;
+        .planet-sidebar .planet-name {
+            flex: 0 0 68px;
             font-weight: 500;
-            font-size: 1.2em;
+            font-size: 1.05em;
         }
 
-        .planet-gate-line {
-            flex: 0 0 115px;
+        .planet-sidebar .planet-gate-line {
+            flex: 0 0 88px;
             text-align: center;
             font-weight: bold;
             font-family: 'Courier New', monospace;
             display: flex;
             align-items: baseline;
             justify-content: center;
-            gap: 3px;
+            gap: 2px;
+            margin-left: 12px;
         }
 
-        .gate-number {
-            font-size: 1.5em;
+        .planet-sidebar .gate-number {
+            font-size: 1.25em;
             font-weight: 700;
             color: #333;
         }
         
         .sidebar-design .gate-number {
-            color: #8b0000;  /* 深紅色 */
+            color: #8b0000;
         }
 
-        .gate-separator {
-            font-size: 1.5em;
-            color: #999;
+        .planet-sidebar .gate-separator,
+        .planet-sidebar .line-number {
+            font-size: 1.25em;
+            font-weight: 700;
+            color: #333;
         }
 
-        .line-number {
-            font-size: 1em;
-            color: #666;
-            font-weight: 500;
+        .sidebar-design .gate-separator,
+        .sidebar-design .line-number {
+            color: #8b0000;
+        }
+
+        .sidebar-personality .gate-separator,
+        .sidebar-personality .line-number {
+            color: #333;
         }
         
-        /* 星座符號樣式 */
-        .zodiac-symbol {
-            font-size: 1.4em;
-            margin-right: 5px;
+        .planet-sidebar .zodiac-symbol {
+            font-size: 1.15em;
+            margin-right: 4px;
             color: #667eea;
             font-weight: bold;
         }
         
         /* 升陷箭頭樣式 */
         .arrow-ascending {
-            color: #28a745;  /* 綠色 */
+            color: #28a745;
             font-size: 1.3em;
             margin-left: 5px;
             font-weight: bold;
             display: inline-block;
         }
-        
         .arrow-descending {
-            color: #dc3545;  /* 紅色 */
+            color: #dc3545;
             font-size: 1.3em;
             margin-left: 5px;
             font-weight: bold;
             display: inline-block;
+        }
+        .planet-sidebar .arrow-ascending,
+        .planet-sidebar .arrow-descending {
+            font-size: 1.1em;
+            margin-left: 3px;
+        }
+
+        /* 分析結果側邊欄 */
+        .analysis-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border-radius: 10px;
+            padding: 20px;
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+        }
+        .analysis-sidebar .sidebar-title {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            border: none;
+        }
+        .analysis-card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 14px 16px;
+            border-left: 4px solid #4a90e2;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .analysis-card.card-profile {
+            border-left-color: #e67e22;
+        }
+        .analysis-card.card-not-self {
+            border-left-color: #c0392b;
+        }
+        .analysis-card h3 {
+            margin: 0 0 8px 0;
+            font-size: 0.95em;
+            color: #555;
+            font-weight: 600;
+        }
+        .analysis-card .analysis-value {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 500;
+        }
+        /* 人生角色：大字體放在橘色框框中 */
+        .profile-value-box {
+            display: inline-block;
+            font-size: 1.6em;
+            font-weight: 700;
+            color: #c0392b;
+            background: #fff5f0;
+            border: 2px solid #e67e22;
+            border-radius: 8px;
+            padding: 10px 18px;
+            margin-top: 4px;
+            min-width: 4ch;
+            text-align: center;
+        }
+        /* 人類圖類型：紫色膠囊標籤 (Badge) */
+        .analysis-card .analysis-value.type-badge,
+        .analysis-value.type-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        /* 策略、決策模式、內在權威、非自己主題：自動換行，不超出白色底色塊 */
+        .analysis-value-wrap {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            max-width: 100%;
+            line-height: 1.4;
         }
 
         .planet-sign {
@@ -751,29 +840,31 @@
         #gene-keys-container {
             position: relative;
             width: 100%;
-            min-height: 1200px;
+            max-width: 100vw;
+            min-height: 1280px;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             border-radius: 15px;
             padding: 40px;
-            overflow: hidden;
+            overflow-x: auto;
+            overflow-y: auto;
             display: flex;
             justify-content: center;
-            align-items: center;
-            /* 觸控手勢優化 - 允許縮放和平移 */
-            touch-action: none;
-            /* 確保容器可以接收所有觸摸事件 */
+            align-items: flex-start;
+            touch-action: pan-x pan-y;
             user-select: none;
             -webkit-user-select: none;
         }
         
-        /* SVG 縮放容器 */
+        /* SVG 容器：1.2 倍放大 (viewBox 1000→顯示 1200)，圖表置中、連線對準球心 */
         .gene-keys-svg-container {
-            width: 100%;
-            height: 100%;
-            min-height: 900px;
+            width: 1200px;
+            min-width: 1200px;
+            height: 1200px;
+            min-height: 1200px;
             position: relative;
             overflow: hidden;
             cursor: grab;
+            margin: 0 auto;
         }
         
         .gene-keys-svg-container:active {
@@ -950,44 +1041,7 @@
             opacity: 0.8;
         }
         
-        .gene-key-label {
-            font-size: 0.75em;
-            text-align: center;
-            margin-top: 5px;
-            font-weight: 600;
-            line-height: 1.2;
-            color: #ffffff;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
-        }
-        
-        .gene-key-desc {
-            font-size: 0.65em;
-            text-align: center;
-            margin-top: 2px;
-            opacity: 0.85;
-            font-style: italic;
-            color: #e0e0e0;
-        }
-        
-        /* 基因天命球體使用與圓形圖表相同的文字格式 */
-        .gene-key-sphere .planet-marker-name {
-            grid-column: 1 / 4;
-            grid-row: 1;
-            font-size: 0.7em;
-            text-align: center;
-            font-weight: 600;
-            align-self: center;
-        }
-        
-        .gene-key-sphere .planet-marker-house {
-            grid-column: 1;
-            grid-row: 2;
-            font-size: 0.7em;
-            text-align: center;
-            align-self: center;
-            justify-self: center;
-        }
-        
+        /* 球體：中央大數字(閘門)、正右側小數字(爻線) */
         .gene-key-sphere .planet-marker-gate {
             grid-column: 2;
             grid-row: 2;
@@ -996,52 +1050,54 @@
             text-align: center;
             align-self: center;
             justify-self: center;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
         }
-        
         .gene-key-sphere .planet-marker-line {
             grid-column: 3;
             grid-row: 2;
-            font-size: 0.7em;
-            text-align: center;
+            font-size: 0.9em;
+            font-weight: 600;
             align-self: center;
-            justify-self: center;
+            justify-self: end;
+            margin: 0 6px 0 0;
+            color: rgba(255,255,255,0.95);
         }
-        
-        .gene-key-sphere .planet-marker-zodiac {
-            grid-column: 1 / 4;
-            grid-row: 3;
-            font-size: 0.65em;
-            text-align: center;
-            align-self: center;
-        }
-        
-        /* 確保文字顏色正確（使用白色文字） */
-        .gene-key-sphere .planet-marker-name,
-        .gene-key-sphere .planet-marker-gate,
-        .gene-key-sphere .planet-marker-line,
-        .gene-key-sphere .planet-marker-zodiac {
-            color: #ffffff;
-        }
-        
-        .gene-key-sphere.green .planet-marker-name,
         .gene-key-sphere.green .planet-marker-gate,
-        .gene-key-sphere.green .planet-marker-line,
-        .gene-key-sphere.green .planet-marker-zodiac {
-            color: #ffffff;
-        }
-        
-        .gene-key-sphere.blue .planet-marker-name,
+        .gene-key-sphere.green .planet-marker-line { color: #ffffff; }
         .gene-key-sphere.blue .planet-marker-gate,
-        .gene-key-sphere.blue .planet-marker-line,
-        .gene-key-sphere.blue .planet-marker-zodiac {
-            color: #ffffff;
-        }
-        
-        .gene-key-sphere.orange .planet-marker-name,
+        .gene-key-sphere.blue .planet-marker-line { color: #ffffff; }
         .gene-key-sphere.orange .planet-marker-gate,
-        .gene-key-sphere.orange .planet-marker-line,
-        .gene-key-sphere.orange .planet-marker-zodiac {
-            color: #ffffff;
+        .gene-key-sphere.orange .planet-marker-line { color: #ffffff; }
+        
+        /* 球體正下方圓角框線標籤（行星名稱：黑太陽、紅金星等，樣式同分析結果膠囊） */
+        .gene-key-badge {
+            font-size: 0.75em;
+            font-weight: 600;
+            text-align: center;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.25);
+            color: #fff;
+            max-width: 95%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-top: 4px;
+            box-sizing: border-box;
+        }
+        .gene-key-node-wrapper .gene-key-sphere.green + .gene-key-badge {
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(45,77,50,0.6);
+        }
+        .gene-key-node-wrapper .gene-key-sphere.blue + .gene-key-badge {
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(33,97,140,0.6);
+        }
+        .gene-key-node-wrapper .gene-key-sphere.orange + .gene-key-badge {
+            border-color: rgba(255,255,255,0.5);
+            background: rgba(123,36,28,0.6);
         }
 
         /* 過濾按鈕樣式 */
@@ -1418,13 +1474,16 @@
                 touch-action: pan-x pan-y pinch-zoom !important; /* 允許平移和縮放 */
             }
 
-            /* Body Graph 容器：垂直堆疊 */
+            /* Body Graph 容器：手機版 潛意識｜意識 並排同畫面，分析結果在下方 */
             #body-graph-container {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
                 grid-template-rows: auto auto;
                 gap: 15px;
                 min-height: auto;
                 padding: 15px;
+            }
+            #body-graph-container #analysis-sidebar {
+                grid-column: 1 / -1;
             }
 
             /* 側邊欄樣式調整 */
@@ -1464,12 +1523,10 @@
                 font-size: 1.2em;
             }
 
-            .gate-separator {
-                font-size: 1.2em;
-            }
-
+            .gate-separator,
             .line-number {
-                font-size: 0.85em;
+                font-size: 1.2em;
+                font-weight: 700;
             }
 
             .zodiac-symbol {
@@ -1506,11 +1563,14 @@
                 user-select: none;
                 -webkit-tap-highlight-color: transparent;
             }
-            /* 內層固定最小寬度，讓橫向捲動能正確出現，圖不會「跑出」螢幕外看不到 */
+            /* 1.2 倍圖表，橫向捲動可完整瀏覽 */
             .gene-keys-svg-container {
-                min-width: 980px !important;
-                width: 980px !important;
+                min-width: 1200px !important;
+                width: 1200px !important;
+                height: 1200px !important;
+                min-height: 1200px !important;
                 overflow: visible !important;
+                margin: 0 auto;
             }
 
             /* 自定義滾動條樣式（Webkit 瀏覽器） */
@@ -1582,21 +1642,13 @@
                 user-select: none;
             }
 
-            /* 手機版字體：保持與桌面版相同大小 */
-            .gene-key-sphere .planet-marker-name {
-                font-size: 0.7em !important;
-            }
-
+            /* 手機版字體：僅閘門與爻線 */
             .gene-key-sphere .planet-marker-gate {
                 font-size: 2.5em !important;
             }
 
             .gene-key-sphere .planet-marker-line {
-                font-size: 0.7em !important;
-            }
-
-            .gene-key-sphere .planet-marker-zodiac {
-                font-size: 0.65em !important;
+                font-size: 0.9em !important;
             }
 
             /* 確保手機版也有 hover 效果（觸控設備） */
@@ -1682,20 +1734,12 @@
                 flex-shrink: 0 !important;
             }
 
-            .gene-key-sphere .planet-marker-name {
-                font-size: 0.7em !important;
-            }
-
             .gene-key-sphere .planet-marker-gate {
                 font-size: 2.5em !important;
             }
 
             .gene-key-sphere .planet-marker-line {
-                font-size: 0.7em !important;
-            }
-
-            .gene-key-sphere .planet-marker-zodiac {
-                font-size: 0.65em !important;
+                font-size: 0.9em !important;
             }
 
             .gene-keys-svg {
@@ -1873,10 +1917,43 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- 分析結果欄 -->
+                            <div class="analysis-sidebar" id="analysis-sidebar">
+                                <div class="sidebar-title">分析結果</div>
+                                <div id="analysis-results-list">
+                                    <div class="analysis-card">
+                                        <h3>輸入數據</h3>
+                                        <div class="analysis-value analysis-value-wrap" id="input-date-display">—</div>
+                                    </div>
+                                    <div class="analysis-card card-profile">
+                                        <h3>人生角色 (Profile)</h3>
+                                        <div class="profile-value-box" id="profile-display">—</div>
+                                    </div>
+                                    <div class="analysis-card">
+                                        <h3>人類圖類型</h3>
+                                        <span class="analysis-value type-badge" id="type-display">—</span>
+                                    </div>
+                                    <div class="analysis-card">
+                                        <h3>人生策略</h3>
+                                        <span class="analysis-value type-badge" id="strategy-display">—</span>
+                                    </div>
+                                    <div class="analysis-card">
+                                        <h3>決策模式</h3>
+                                        <span class="analysis-value type-badge" id="decision-mode-display">—</span>
+                                    </div>
+                                    <div class="analysis-card">
+                                        <h3>內在權威</h3>
+                                        <span class="analysis-value type-badge" id="authority-display">—</span>
+                                    </div>
+                                    <div class="analysis-card card-not-self">
+                                        <h3>非自己主題</h3>
+                                        <span class="analysis-value type-badge" id="not-self-theme-display">—</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <!-- 分析結果區塊已移除 -->
                         </div>
                 
                 <!-- 基因天命說明面板 -->
@@ -2803,6 +2880,22 @@
             return `channel-${gate1}-${gate2}`;
         }
 
+        // 渲染分析結果區塊：將 API 回傳的 profile, type, strategy, authority, not_self_theme 填入對應顯示容器
+        function renderAnalysisResults(data) {
+            if (!data) return;
+            function set(id, text) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = (text != null && text !== '') ? String(text) : '—';
+            }
+            set('input-date-display', data.input_date ? '日期時間：' + data.input_date : '');
+            set('profile-display', data.profile);
+            set('type-display', data.type != null ? data.type : data.type_name);
+            set('strategy-display', data.strategy && String(data.strategy).indexOf('先告知') >= 0 ? '等待回應' : data.strategy);
+            set('decision-mode-display', data.decision_mode);
+            set('authority-display', data.authority ? String(data.authority).split('：')[0].trim() : '');
+            set('not-self-theme-display', data.not_self_theme);
+        }
+
         // 渲染人類圖的主要函式
         function renderHumanDesign(data) {
             if (!data) {
@@ -2810,7 +2903,8 @@
                 return;
             }
 
-            // 文字分析結果已移除
+            // 1. 渲染分析結果（輸入數據、人生角色、類型、策略、決策模式、內在權威、非自己主題）
+            renderAnalysisResults(data);
 
             // 2. 渲染行星列表（如果數據包含）
             // 注意：參數順序為 (personalityList, designList)
@@ -3225,19 +3319,19 @@
                 { id: 'design-earth', label: '紅地球', value: designEarth?.gate_line || 'N/A', 
                   color: 'green', gridRow: 5, gridCol: 3, description: 'Purpose', planet: 'Earth', type: 'design', sequence: 'genius', sequences: ['genius', 'love'], loveColor: 'orange' },
                 
-                // 中層兩側 (第 2, 4 欄)
+                // 中層兩側 (第 2, 4 欄) — 無 transform，嚴格左右對稱
                 { id: 'design-mars', label: '紅火星', value: designMars?.gate_line || 'N/A', 
-                  color: 'blue', gridRow: 2, gridCol: 2, description: 'Core', planet: 'Mars', type: 'design', transform: 'translate(20px, 60px)', sequence: 'prosperity', sequences: ['prosperity', 'love'], loveColor: 'orange' },
+                  color: 'blue', gridRow: 2, gridCol: 2, description: 'Core', planet: 'Mars', type: 'design', sequence: 'prosperity', sequences: ['prosperity', 'love'], loveColor: 'orange' },
                 { id: 'design-jupiter', label: '紅木星', value: designJupiter?.gate_line || 'N/A', 
-                  color: 'blue', gridRow: 2, gridCol: 4, description: 'Culture', planet: 'Jupiter', type: 'design', transform: 'translate(-20px, 60px)', sequence: 'prosperity' },
+                  color: 'blue', gridRow: 2, gridCol: 4, description: 'Culture', planet: 'Jupiter', type: 'design', sequence: 'prosperity' },
                 { id: 'design-sun', label: '紅太陽', value: designSun?.gate_line || 'N/A', 
                   color: 'green', gridRow: 3, gridCol: 1, description: 'Radiance', planet: 'Sun', type: 'design', sequence: 'genius' },
                 { id: 'personality-earth', label: '黑地球', value: personalityEarth?.gate_line || 'N/A', 
                   color: 'green', gridRow: 3, gridCol: 5, description: 'Evolution', planet: 'Earth', type: 'personality', sequence: 'genius' },
                 { id: 'personality-venus', label: '黑金星', value: personalityVenus?.gate_line || 'N/A', 
-                  color: 'orange', gridRow: 4, gridCol: 2, description: 'IQ', planet: 'Venus', type: 'personality', transform: 'translate(0, -70px)', sequence: 'love' },
+                  color: 'orange', gridRow: 4, gridCol: 2, description: 'IQ', planet: 'Venus', type: 'personality', sequence: 'love' },
                 { id: 'personality-mars', label: '黑火星', value: personalityMars?.gate_line || 'N/A', 
-                  color: 'orange', gridRow: 4, gridCol: 4, description: 'EQ', planet: 'Mars', type: 'personality', transform: 'translate(0, -70px)', sequence: 'love' },
+                  color: 'orange', gridRow: 4, gridCol: 4, description: 'EQ', planet: 'Mars', type: 'personality', sequence: 'love' },
             ];
             
             // 構建連接線數據（根據指定的三條序列路徑）
@@ -3258,122 +3352,83 @@
                 { from: 'design-mars', to: 'design-venus', color: 'red', sequence: 'love' },          // 紅火星 → 紅金星
                 
                 // 3. 珍珠序列 (Pearl Sequence) - 藍色連線 = 服務 (prosperity)
-                // 移除：紅金星 → 紅木星 的連線
                 { from: 'design-jupiter', to: 'personality-jupiter', color: 'blue', sequence: 'prosperity' }, // 紅木星 → 黑木星
                 { from: 'personality-jupiter', to: 'design-mars', color: 'blue', sequence: 'prosperity' }, // 黑木星 → 紅火星
-                // 移除：紅火星 → 紅金星 和 紅木星 → 紅金星 的連線
                 { from: 'design-mars', to: 'design-jupiter', color: 'blue', sequence: 'prosperity' },      // 紅火星 → 紅木星
                 { from: 'personality-sun', to: 'design-mars', color: 'blue', sequence: 'prosperity' },     // 黑太陽 → 紅火星
                 { from: 'personality-sun', to: 'design-jupiter', color: 'blue', sequence: 'prosperity' },  // 黑太陽 → 紅木星
                 { from: 'personality-jupiter', to: 'personality-sun', color: 'blue', sequence: 'prosperity' }, // 黑木星 → 黑太陽
             ];
             
-            // 計算每個網格單元的中心點（SVG 座標系統，0-1000）
-            // 使用 1000x1000 的 viewBox，中心在 (500, 500)
-            // 實際佈局範圍約 200-800，留出邊距
+            // 標準 5x5 網格座標：垂直中軸 X=500，水平中線 Y=500，嚴格對稱
             const getCenterPoint = (gridRow, gridCol) => {
-                const minX = 200;
-                const maxX = 800;
-                const minY = 200;
-                const maxY = 800;
-                const cellWidth = (maxX - minX) / 4; // 4 個間隔
+                const minX = 200, maxX = 800, minY = 200, maxY = 800;
+                const cellWidth = (maxX - minX) / 4;
                 const cellHeight = (maxY - minY) / 4;
-                
                 const x = minX + (gridCol - 1) * cellWidth;
                 const y = minY + (gridRow - 1) * cellHeight;
-                
                 return { x, y };
             };
             
-            // 創建節點並記錄位置（在 SVG 內）
             const nodePositions = {};
-            let currentFilterSequence = 'all'; // 過濾狀態
+            let currentFilterSequence = 'all';
             
             geneKeyNodes.forEach(node => {
-                // 計算節點位置
                 const center = getCenterPoint(node.gridRow, node.gridCol);
-                let x = center.x;
-                let y = center.y;
-                
-                // 處理額外的 transform（如果有）
-                if (node.transform) {
-                    // 解析 translate 值（例如 "translate(20px, 60px)"）
-                    const match = node.transform.match(/translate\(([^,]+),\s*([^)]+)\)/);
-                    if (match) {
-                        const dx = parseFloat(match[1]) || 0;
-                        const dy = parseFloat(match[2]) || 0;
-                        // 將像素轉換為 SVG 座標（假設 1px ≈ 1 SVG 單位）
-                        x += dx;
-                        y += dy;
-                    }
-                }
-                
+                const x = center.x;
+                const y = center.y;
                 nodePositions[node.id] = { x, y };
                 
-                // 在 SVG 內創建節點（使用 foreignObject 來包含 HTML）
-                // 視窗設為 144x144，讓 hover 放大 1.15 倍時不會被裁成方形（120*1.15≈138）
+                // 在 SVG 內創建節點（使用 foreignObject）：僅保留閘門(大數字)與爻線(右上小數字)，下方加圓角關鍵字 Badge
                 const foSize = 144;
                 const sphereSize = 120;
+                const badgeHeight = 28;
                 const foOffset = foSize / 2;
                 const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
                 foreignObject.setAttribute('x', x - foOffset);
                 foreignObject.setAttribute('y', y - foOffset);
                 foreignObject.setAttribute('width', String(foSize));
-                foreignObject.setAttribute('height', String(foSize));
+                foreignObject.setAttribute('height', String(foSize + badgeHeight));
                 foreignObject.setAttribute('id', `gene-key-${node.id}`);
                 
-                // 創建 HTML 內容（置中於 foreignObject，避免放大時露出方形邊）
+                const wrapper = document.createElement('div');
+                wrapper.className = 'gene-key-node-wrapper';
+                wrapper.style.cssText = 'display:flex;flex-direction:column;align-items:center;width:100%;height:100%;pointer-events:none;';
+                
                 const nodeDiv = document.createElement('div');
                 nodeDiv.className = `gene-key-sphere ${node.color}`;
                 nodeDiv.style.width = sphereSize + 'px';
                 nodeDiv.style.height = sphereSize + 'px';
-                nodeDiv.style.margin = ((foSize - sphereSize) / 2) + 'px';
+                nodeDiv.style.margin = ((foSize - sphereSize) / 2) + 'px' + ' 0 0 0';
                 nodeDiv.style.pointerEvents = 'auto';
                 nodeDiv.style.cursor = 'pointer';
                 
-                // 設置序列屬性（用於過濾）
                 if (node.sequences && Array.isArray(node.sequences)) {
                     nodeDiv.setAttribute('data-sequences', node.sequences.join(','));
                     nodeDiv.setAttribute('data-sequence', node.sequence || node.sequences[0]);
                 } else if (node.sequence) {
                     nodeDiv.setAttribute('data-sequence', node.sequence);
                 }
-                
-                // 保存顏色信息
                 if (node.loveColor) {
                     nodeDiv.setAttribute('data-original-color', node.color);
                     nodeDiv.setAttribute('data-love-color', node.loveColor);
                 }
                 if (node.prosperityColor) {
-                    if (!nodeDiv.getAttribute('data-original-color')) {
-                        nodeDiv.setAttribute('data-original-color', node.color);
-                    }
+                    if (!nodeDiv.getAttribute('data-original-color')) nodeDiv.setAttribute('data-original-color', node.color);
                     nodeDiv.setAttribute('data-prosperity-color', node.prosperityColor);
                 }
                 
-                // 解析閘門和爻線
                 const gateLine = node.value.toString();
                 const parts = gateLine.split('.');
                 const gate = parts[0] || '';
                 const line = parts[1] || '';
+                const badgeText = (node.label != null && node.label !== '') ? String(node.label) : '—';
                 
-                // 獲取星座符號
-                let zodiac = '';
-                const planetData = findPlanet(node.type === 'personality' ? personalityList : designList, node.planet);
-                if (planetData && planetData.constellation_symbol) {
-                    zodiac = planetData.constellation_symbol;
-                }
-                
-                // 設置內容
                 nodeDiv.innerHTML = `
-                    <div class="planet-marker-name">${node.label}</div>
-                    <div class="planet-marker-house"></div>
                     <div class="planet-marker-gate">${gate}</div>
                     <div class="planet-marker-line">${line}爻</div>
-                    <div class="planet-marker-zodiac">${zodiac}</div>
                 `;
                 
-                // 添加點擊事件
                 nodeDiv.addEventListener('click', function(e) {
                     e.stopPropagation();
                     const gateNumber = parseInt(gate);
@@ -3385,7 +3440,14 @@
                     }
                 });
                 
-                foreignObject.appendChild(nodeDiv);
+                const badge = document.createElement('div');
+                badge.className = 'gene-key-badge';
+                badge.textContent = badgeText;
+                badge.style.pointerEvents = 'auto';
+                
+                wrapper.appendChild(nodeDiv);
+                wrapper.appendChild(badge);
+                foreignObject.appendChild(wrapper);
                 spheresGroup.appendChild(foreignObject);
             });
             
@@ -3897,7 +3959,13 @@
                 const resultDataToSave = {
                     input_date: resultData.input_date,
                     personality_list: resultData.personality_list,
-                    design_list: resultData.design_list
+                    design_list: resultData.design_list,
+                    profile: resultData.profile,
+                    type_name: resultData.type_name,
+                    strategy: resultData.strategy,
+                    decision_mode: resultData.decision_mode,
+                    authority: resultData.authority,
+                    not_self_theme: resultData.not_self_theme
                 };
 
                 const response = await fetch('/api/history', {
@@ -3956,7 +4024,13 @@
                     result: {
                         input_date: resultData.input_date,
                         personality_list: resultData.personality_list,
-                        design_list: resultData.design_list
+                        design_list: resultData.design_list,
+                        profile: resultData.profile,
+                        type_name: resultData.type_name,
+                        strategy: resultData.strategy,
+                        decision_mode: resultData.decision_mode,
+                        authority: resultData.authority,
+                        not_self_theme: resultData.not_self_theme
                     }
                 };
                 records.unshift(newRecord);
