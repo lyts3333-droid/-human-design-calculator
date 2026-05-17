@@ -10,3 +10,4 @@ gunicorn
 pandas
 psycopg2-binary
 line-bot-sdk==3.13.0
+requests>=2.31.0

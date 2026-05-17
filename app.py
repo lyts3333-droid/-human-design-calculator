@@ -13,6 +13,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import base64
 import datetime
 import hashlib
+import hmac
 import json
 import re
 from typing import Any, Dict, List, Optional, Tuple
@@ -1824,16 +1825,22 @@ def line_callback():
             {"Content-Type": "text/plain; charset=utf-8"},
         )
 
-    body_bytes = request.get_data()
-    signature = request.headers.get("X-Line-Signature", "")
-    if not _verify_line_signature(body_bytes, signature):
-        print("[ERROR] LINE webhook 簽章驗證失敗")
-        return "Invalid signature", 400
+    try:
+        body_bytes = request.get_data()
+        signature = request.headers.get("X-Line-Signature", "")
+        if not _verify_line_signature(body_bytes, signature):
+            print("[ERROR] LINE webhook 簽章驗證失敗")
+            return "Invalid signature", 400
 
-    err = _handle_line_webhook_post(body_bytes)
-    if err:
-        return err, 503, {"Content-Type": "text/plain; charset=utf-8"}
-    return "OK", 200
+        err = _handle_line_webhook_post(body_bytes)
+        if err:
+            return err, 503, {"Content-Type": "text/plain; charset=utf-8"}
+        return "OK", 200
+    except Exception as e:
+        print(f"[ERROR] /callback POST 失敗: {e}")
+        import traceback
+        traceback.print_exc()
+        return "Internal error", 500
 
 
 @app.route("/api/calculate", methods=["POST"])
