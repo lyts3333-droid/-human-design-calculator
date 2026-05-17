@@ -10,10 +10,14 @@ from flask_cors import CORS
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+import base64
 import datetime
 import hashlib
+import json
 import re
 from typing import Any, Dict, List, Optional, Tuple
+
+import requests
 
 import swisseph as swe
 import pytz
@@ -1493,6 +1497,39 @@ def _personality_sun_gate(personality_list: List[Dict]) -> Optional[int]:
     return None
 
 
+def _personality_sun_planet_row(personality_list: List[Dict]) -> Optional[Dict]:
+    """意識太陽（黑太陽）完整行星列。"""
+    for p in personality_list:
+        if p.get("planet") == "Sun":
+            return p
+    return None
+
+
+def _gene_key_detail_from_row(gk_row: Optional[Dict]) -> Dict[str, str]:
+    """由 gene_keys.csv 一列組出黑太陽基因天命完整欄位。"""
+    if not gk_row:
+        return {
+            "name": "",
+            "shadow": "",
+            "manifestation": "",
+            "gift": "",
+            "transformation": "",
+            "siddhi": "",
+            "final_state": "",
+            "synthesis": "",
+        }
+    return {
+        "name": str(gk_row.get("name", "") or ""),
+        "shadow": str(gk_row.get("shadow", "") or ""),
+        "manifestation": str(gk_row.get("manifestation", "") or ""),
+        "gift": str(gk_row.get("gift", "") or ""),
+        "transformation": str(gk_row.get("transformation", "") or ""),
+        "siddhi": str(gk_row.get("siddhi", "") or ""),
+        "final_state": str(gk_row.get("finalState", "") or ""),
+        "synthesis": str(gk_row.get("synthesis", "") or ""),
+    }
+
+
 def run_birth_chart_calculation(
     birth_date: str,
     birth_time: str,
@@ -1517,26 +1554,23 @@ def run_birth_chart_calculation(
         return None, str(hd["error"])
 
     personality_list = hd.get("personality_list") or []
+    sun_row = _personality_sun_planet_row(personality_list)
     main_gate = _personality_sun_gate(personality_list)
     if main_gate is None:
         return None, "無法從計算結果取得意識太陽（黑太陽）閘門"
 
     gk_map = load_gene_keys_data()
     gk_row = gk_map.get(main_gate) if gk_map else None
-
-    if gk_row:
-        shadow = str(gk_row.get("shadow", "") or "")
-        gift = str(gk_row.get("gift", "") or "")
-        siddhi = str(gk_row.get("siddhi", "") or "")
-    else:
-        shadow = gift = siddhi = ""
+    gene_key_detail = _gene_key_detail_from_row(gk_row)
 
     payload = {
         "status": "success",
         "主要基因天命編號": main_gate,
-        "shadow": shadow,
-        "gift": gift,
-        "siddhi": siddhi,
+        "black_sun_gate_line": (sun_row.get("gate_line") if sun_row else "") or "",
+        "black_sun_gene_key": gene_key_detail,
+        "shadow": gene_key_detail["shadow"],
+        "gift": gene_key_detail["gift"],
+        "siddhi": gene_key_detail["siddhi"],
         "human_design": {
             "input_date": hd.get("input_date"),
             "profile": hd.get("profile"),
@@ -1550,21 +1584,37 @@ def run_birth_chart_calculation(
     return payload, None
 
 
-# LINE 使用者輸入：西元日期 + 空白 + 時間（與範例「1990-09-21 12:00」一致）
+# LINE 生日輸入：1990-09-21 12:00、1990/9/21 12:00、全形空白等
 LINE_BIRTH_INPUT_PATTERN = re.compile(
-    r"^\s*(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})\s*$"
+    r"^\s*(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})\s*$"
 )
 
 _LINE_HELP_TEXT = (
-    "請輸入生日與時間，格式如下（西元年-月-日，接一個空白，再接 24 小時制時:分）：\n"
-    "範例：1990-09-21 12:00\n"
-    "※ 月、日請補零（例如 09、21）。"
+    "請輸入「西元生日 + 空白 + 出生時間」，例如：\n"
+    "1990-09-21 12:00\n"
+    "或 1990/9/21 12:00\n"
+    "（24 小時制，需含時與分）"
 )
 
-_line_bot_api_global: Any = None
-_line_webhook_handler: Any = None
-_line_sdk_import_error: Optional[str] = None
 
+def _normalize_line_birth_input(raw: str) -> Optional[Tuple[str, str]]:
+    """解析 LINE 文字為 (birth_date YYYY-MM-DD, birth_time HH:MM)。"""
+    if not raw:
+        return None
+    text = raw.strip().replace("\u3000", " ").replace("\t", " ")
+    m = LINE_BIRTH_INPUT_PATTERN.match(text)
+    if not m:
+        return None
+    y, mo, d, h, mi = m.groups()
+    try:
+        year, month, day = int(y), int(mo), int(d)
+        hour, minute = int(h), int(mi)
+        datetime.datetime(year, month, day, hour, minute)
+    except (ValueError, TypeError):
+        return None
+    if not (0 <= hour < 24 and 0 <= minute < 60):
+        return None
+    return f"{year:04d}-{month:02d}-{day:02d}", f"{hour:02d}:{minute:02d}"
 
 def _truncate_for_line(text: str, max_len: int = 900) -> str:
     if not text or len(text) <= max_len:
@@ -1572,9 +1622,37 @@ def _truncate_for_line(text: str, max_len: int = 900) -> str:
     return text[: max_len - 1] + "…"
 
 
+def _format_black_sun_gene_key_for_line(gk: Dict[str, str], gate: Any, gate_line: str) -> List[str]:
+    """黑太陽（意識太陽）基因天命完整區塊，對應網頁各分頁欄位。"""
+    name = gk.get("name") or f"基因天命{gate}"
+    header = f"── 黑太陽 · {name}"
+    if gate_line:
+        header += f"（{gate_line}）"
+    header += " ──"
+    lines = [header, ""]
+    sections = [
+        ("陰影", gk.get("shadow", "")),
+        ("表現形式", gk.get("manifestation", "")),
+        ("天賦", gk.get("gift", "")),
+        ("轉化過程", gk.get("transformation", "")),
+        ("神聖才能", gk.get("siddhi", "")),
+        ("最終狀態", gk.get("final_state", "")),
+        ("綜合意義", gk.get("synthesis", "")),
+    ]
+    for title, content in sections:
+        lines.append(f"【{title}】")
+        lines.append(_truncate_for_line(str(content or ""), max_len=650))
+        lines.append("")
+    return lines
+
+
 def _format_birth_result_for_line(payload: Dict) -> str:
     """將 run_birth_chart_calculation 結果整理成 LINE 易讀文字。"""
     hd = payload.get("human_design") or {}
+    gk = payload.get("black_sun_gene_key") or {}
+    gate = payload.get("主要基因天命編號", "—")
+    gate_line = str(payload.get("black_sun_gate_line") or "")
+
     lines = [
         "【人類圖／基因天命 計算結果】",
         f"輸入時間：{hd.get('input_date', '—')}",
@@ -1587,86 +1665,145 @@ def _format_birth_result_for_line(payload: Dict) -> str:
         f"內在權威：{hd.get('authority', '—')}",
         f"非自己主題：{hd.get('not_self_theme', '—')}",
         "",
-        "── 主要基因天命（意識太陽閘門）──",
-        f"閘門編號：{payload.get('主要基因天命編號', '—')}",
-        "",
-        "【陰影 Shadow】",
-        _truncate_for_line(str(payload.get("shadow", "") or "")),
-        "",
-        "【天賦 Gift】",
-        _truncate_for_line(str(payload.get("gift", "") or "")),
-        "",
-        "【悉地 Siddhi】",
-        _truncate_for_line(str(payload.get("siddhi", "") or "")),
     ]
-    out = "\n".join(lines)
+    lines.extend(_format_black_sun_gene_key_for_line(gk, gate, gate_line))
+    out = "\n".join(lines).strip()
     if len(out) > 4800:
         out = out[:4799] + "…"
     return out
 
 
-def _process_line_text_message(event: Any, line_bot_api: Any) -> None:
-    from linebot.models import TextSendMessage
-
-    raw = (event.message.text or "").strip()
-    m = LINE_BIRTH_INPUT_PATTERN.match(raw)
-    if not m:
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text="格式不正確。\n\n" + _LINE_HELP_TEXT),
-        )
-        return
-
-    birth_date, birth_time = m.group(1), m.group(2)
-    tz = os.environ.get("LINE_DEFAULT_TIMEZONE") or os.environ.get("DEFAULT_TIMEZONE")
-    payload, err = run_birth_chart_calculation(
-        birth_date,
-        birth_time,
-        timezone_str=tz,
-        longitude=0.0,
-        latitude=0.0,
-    )
-    if err:
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=f"計算時發生問題：{err}\n\n{_LINE_HELP_TEXT}"),
-        )
-        return
-
-    try:
-        line_bot_api.reply_message(
-            event.reply_token,
-            TextSendMessage(text=_format_birth_result_for_line(payload)),
-        )
-    except Exception as e:
-        print(f"[ERROR] LINE reply_message 失敗: {e}")
-
-
-def _ensure_line_webhook_registered() -> bool:
-    """依環境變數建立 LineBotApi 與 WebhookHandler（僅一次）。延遲匯入 line-bot-sdk。"""
-    global _line_bot_api_global, _line_webhook_handler, _line_sdk_import_error
-    secret = os.environ.get("LINE_CHANNEL_SECRET")
-    token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
-    if not secret or not token:
+def _verify_line_signature(body: bytes, signature: str) -> bool:
+    secret = os.environ.get("LINE_CHANNEL_SECRET") or ""
+    if not secret or not signature:
         return False
-    if _line_webhook_handler is not None:
+    digest = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).digest()
+    expected = base64.b64encode(digest).decode("utf-8")
+    return hmac.compare_digest(expected, signature)
+
+
+def _line_api_headers() -> Dict[str, str]:
+    token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN") or ""
+    return {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+
+def _line_api_reply(reply_token: str, text: str) -> bool:
+    if not reply_token:
+        return False
+    try:
+        r = requests.post(
+            "https://api.line.me/v2/bot/message/reply",
+            headers=_line_api_headers(),
+            json={
+                "replyToken": reply_token,
+                "messages": [{"type": "text", "text": (text or "")[:5000]}],
+            },
+            timeout=15,
+        )
+        if r.status_code != 200:
+            print(f"[ERROR] LINE reply API {r.status_code}: {r.text[:500]}")
+            return False
         return True
-    try:
-        from linebot import LineBotApi, WebhookHandler
-        from linebot.models import MessageEvent, TextMessage
-    except ImportError as e:
-        _line_sdk_import_error = str(e)
-        print(f"[ERROR] line-bot-sdk 未安裝或匯入失敗: {e}")
+    except Exception as e:
+        print(f"[ERROR] LINE reply API 例外: {e}")
         return False
 
-    _line_bot_api_global = LineBotApi(token)
-    _line_webhook_handler = WebhookHandler(secret)
 
-    @_line_webhook_handler.add(MessageEvent, message=TextMessage)
-    def _on_line_text(event: Any):
-        _process_line_text_message(event, _line_bot_api_global)
+def _line_api_push(user_id: str, text: str) -> bool:
+    if not user_id:
+        return False
+    try:
+        r = requests.post(
+            "https://api.line.me/v2/bot/message/push",
+            headers=_line_api_headers(),
+            json={
+                "to": user_id,
+                "messages": [{"type": "text", "text": (text or "")[:5000]}],
+            },
+            timeout=15,
+        )
+        if r.status_code != 200:
+            print(f"[ERROR] LINE push API {r.status_code}: {r.text[:500]}")
+            return False
+        return True
+    except Exception as e:
+        print(f"[ERROR] LINE push API 例外: {e}")
+        return False
 
-    return True
+
+def _process_line_user_text(reply_token: str, user_id: Optional[str], raw: str) -> None:
+    """處理使用者文字（直接呼叫 LINE Messaging API，不依賴 SDK 回覆）。"""
+    try:
+        if raw.lower() in ("help", "說明", "幫助", "?"):
+            _line_api_reply(reply_token, _LINE_HELP_TEXT)
+            return
+
+        parsed = _normalize_line_birth_input(raw)
+        if not parsed:
+            _line_api_reply(reply_token, f"格式不正確。\n\n{_LINE_HELP_TEXT}")
+            return
+
+        birth_date, birth_time = parsed
+        _line_api_reply(reply_token, "收到！正在計算中，請稍候…")
+
+        tz = os.environ.get("LINE_DEFAULT_TIMEZONE") or os.environ.get("DEFAULT_TIMEZONE")
+        payload, err = run_birth_chart_calculation(
+            birth_date,
+            birth_time,
+            timezone_str=tz,
+            longitude=0.0,
+            latitude=0.0,
+        )
+        if err:
+            out = f"計算時發生問題：{err}\n\n{_LINE_HELP_TEXT}"
+        else:
+            out = _format_birth_result_for_line(payload)
+
+        if user_id:
+            if not _line_api_push(user_id, out):
+                print("[ERROR] 無法 push 計算結果，請檢查 CHANNEL_ACCESS_TOKEN")
+        else:
+            print("[ERROR] 無 user_id，無法推送計算結果")
+    except Exception as e:
+        print(f"[ERROR] LINE 處理訊息失敗: {e}")
+        import traceback
+        traceback.print_exc()
+        _line_api_reply(reply_token, "系統暫時無法處理，請稍後再試。\n\n" + _LINE_HELP_TEXT)
+
+
+def _handle_line_webhook_post(body_bytes: bytes) -> Optional[str]:
+    """
+    解析 Webhook JSON 並處理文字訊息。
+    成功回傳 None；失敗回傳錯誤訊息（供 HTTP 狀態碼使用）。
+    """
+    token = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN")
+    secret = os.environ.get("LINE_CHANNEL_SECRET")
+    if not token or not secret:
+        return "LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN must be set"
+
+    try:
+        data = json.loads(body_bytes.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        print(f"[ERROR] LINE webhook JSON 解析失敗: {e}")
+        return "Invalid JSON"
+
+    events = data.get("events") or []
+    print(f"[LINE] webhook 收到 {len(events)} 個事件")
+    for ev in events:
+        if ev.get("type") != "message":
+            continue
+        msg = ev.get("message") or {}
+        if msg.get("type") != "text":
+            continue
+        reply_token = ev.get("replyToken") or ""
+        user_id = (ev.get("source") or {}).get("userId")
+        text = (msg.get("text") or "").strip()
+        print(f"[LINE] 文字訊息 user={user_id} text={text[:40]!r}")
+        _process_line_user_text(reply_token, user_id, text)
+    return None
 
 
 @app.route("/callback", methods=["GET", "POST"], strict_slashes=False)
@@ -1687,32 +1824,15 @@ def line_callback():
             {"Content-Type": "text/plain; charset=utf-8"},
         )
 
-    if not _ensure_line_webhook_registered():
-        if _line_sdk_import_error:
-            return (
-                "line-bot-sdk import failed: " + _line_sdk_import_error,
-                503,
-                {"Content-Type": "text/plain; charset=utf-8"},
-            )
-        return (
-            "LINE_CHANNEL_SECRET and LINE_CHANNEL_ACCESS_TOKEN must be set",
-            503,
-            {"Content-Type": "text/plain; charset=utf-8"},
-        )
-
-    from linebot.exceptions import InvalidSignatureError
-
+    body_bytes = request.get_data()
     signature = request.headers.get("X-Line-Signature", "")
-    body = request.get_data(as_text=True)
-    try:
-        if _line_webhook_handler is None:
-            return "LINE handler not initialized", 500
-        _line_webhook_handler.handle(body, signature)
-    except InvalidSignatureError:
+    if not _verify_line_signature(body_bytes, signature):
+        print("[ERROR] LINE webhook 簽章驗證失敗")
         return "Invalid signature", 400
-    except Exception as e:
-        print(f"[ERROR] /callback handle 失敗: {e}")
-        return "Internal error", 500
+
+    err = _handle_line_webhook_post(body_bytes)
+    if err:
+        return err, 503, {"Content-Type": "text/plain; charset=utf-8"}
     return "OK", 200
 
 
