@@ -932,11 +932,6 @@ def determine_type(
     throat_to_motor = _is_throat_connected_to_motor(
         defined_centers, defined_channels or []
     )
-    if not throat_to_motor and defined_centers.get("Throat", False):
-        for motor in MOTOR_CENTERS:
-            if defined_centers.get(motor, False):
-                throat_to_motor = True
-                break
 
     # 2. 生產者 / 顯示型生產者：薦骨有定義
     if sacral_defined:
@@ -958,51 +953,45 @@ def calculate_profile(personality_sun_line: int, design_sun_line: int) -> str:
     return f"{personality_sun_line}/{design_sun_line}"
 
 
-# 人類圖36條通道定義：每個通道連接兩個中心
-# 格式：標準化的通道(小閘門, 大閘門): (中心1, 中心2)
-# 注意：通道的兩個閘門順序不重要，所以統一使用 (min(gate1, gate2), max(gate1, gate2)) 作為鍵
+# 人類圖 36 條通道（閘門對 → 連接的兩個中心），與標準人類圖一致
+# 鍵為 (min(閘門), max(閘門))；中心僅在「完整通道」兩端閘門皆啟動時才算定義
 HUMAN_DESIGN_CHANNELS = {
-    # Head 到 Ajna 的通道
-    (4, 63): ("Head", "Ajna"),    # 通道 4-63
-    (11, 56): ("Head", "Ajna"),   # 通道 11-56
-    (17, 62): ("Head", "Ajna"),   # 通道 17-62
-    (24, 61): ("Head", "Ajna"),   # 通道 24-61
-    (23, 43): ("Head", "Ajna"),   # 通道 23-43
-    (47, 64): ("Head", "Ajna"),   # 通道 47-64
-    # Ajna 到 Throat 的通道
-    (1, 8): ("Ajna", "Throat"),   # 通道 1-8
-    (7, 31): ("Ajna", "Throat"),  # 通道 7-31
-    (13, 33): ("Ajna", "Throat"), # 通道 13-33
-    # Throat 相關通道
-    (2, 14): ("Sacral", "Throat"), # 通道 2-14 (Sacral-Throat)
-    (5, 15): ("Sacral", "Throat"), # 通道 5-15 (Sacral-Throat)
-    (16, 48): ("Throat", "G"),     # 通道 16-48 (Throat-G)
-    (10, 20): ("Throat", "G"),     # 通道 10-20 (Throat-G, 實際上是 Throat 自連接，但連接到 G)
-    (10, 34): ("Throat", "Sacral"), # 通道 10-34 (Throat-Sacral)
-    (20, 34): ("Throat", "Sacral"), # 通道 20-34 (Throat-Sacral)
-    (10, 57): ("Throat", "G"),     # 通道 10-57 (Throat-G)
-    (20, 57): ("Throat", "G"),     # 通道 20-57 (Throat-G)
-    (29, 46): ("Sacral", "Throat"), # 通道 29-46 (Sacral-Throat)
-    # Ego/Heart 相關通道
-    (21, 45): ("Ego", "Throat"),   # 通道 21-45 (Ego-Throat)
-    (26, 44): ("Ego", "Spleen"),   # 通道 26-44 (Ego-Spleen)
-    # Sacral 相關通道
-    (3, 60): ("Sacral", "Root"),   # 通道 3-60 (Sacral-Root)
-    (9, 52): ("Sacral", "Root"),   # 通道 9-52 (Sacral-Root)
-    (34, 57): ("Sacral", "G"),     # 通道 34-57 (Sacral-G)
-    (42, 53): ("Sacral", "Root"),  # 通道 42-53 (Sacral-Root)
-    # Solar Plexus 相關通道
-    (6, 59): ("Solar_Plexus", "Sacral"), # 通道 6-59 (Solar Plexus-Sacral)
-    (22, 12): ("Solar_Plexus", "Throat"), # 通道 22-12 (Solar Plexus-Throat)
-    (37, 40): ("Solar_Plexus", "G"),      # 通道 37-40 (Solar Plexus-G)
-    (39, 55): ("Solar_Plexus", "Root"),   # 通道 39-55 (Solar Plexus-Root)
-    # Spleen 相關通道
-    (18, 58): ("Spleen", "Root"),  # 通道 18-58 (Spleen-Root)
-    (28, 38): ("Spleen", "Root"),  # 通道 28-38 (Spleen-Root)
-    (32, 54): ("Spleen", "Sacral"), # 通道 32-54 (Spleen-Sacral)
-    # Root 相關通道
-    (19, 49): ("Root", "Sacral"),  # 通道 19-49 (Root-Sacral)
-    (30, 41): ("Root", "G"),       # 通道 30-41 (Root-G)
+    (4, 63): ("Head", "Ajna"),
+    (24, 61): ("Head", "Ajna"),
+    (47, 64): ("Head", "Ajna"),
+    (17, 62): ("Ajna", "Throat"),
+    (43, 23): ("Ajna", "Throat"),
+    (11, 56): ("Ajna", "Throat"),
+    (1, 8): ("G", "Throat"),
+    (7, 31): ("G", "Throat"),
+    (10, 20): ("G", "Throat"),
+    (13, 33): ("G", "Throat"),
+    (16, 48): ("Throat", "Spleen"),
+    (20, 57): ("Throat", "Spleen"),
+    (20, 34): ("Sacral", "Throat"),
+    (35, 36): ("Solar_Plexus", "Throat"),
+    (12, 22): ("Solar_Plexus", "Throat"),
+    (2, 14): ("G", "Sacral"),
+    (5, 15): ("G", "Sacral"),
+    (10, 34): ("G", "Sacral"),
+    (29, 46): ("G", "Sacral"),
+    (10, 57): ("G", "Spleen"),
+    (25, 51): ("G", "Ego"),
+    (37, 40): ("Solar_Plexus", "Ego"),
+    (26, 44): ("Ego", "Spleen"),
+    (21, 45): ("Ego", "Throat"),
+    (3, 60): ("Sacral", "Root"),
+    (9, 52): ("Sacral", "Root"),
+    (42, 53): ("Sacral", "Root"),
+    (6, 59): ("Solar_Plexus", "Sacral"),
+    (34, 57): ("Sacral", "Spleen"),
+    (27, 50): ("Sacral", "Spleen"),
+    (18, 58): ("Spleen", "Root"),
+    (28, 38): ("Spleen", "Root"),
+    (32, 54): ("Spleen", "Root"),
+    (19, 49): ("Root", "Sacral"),
+    (39, 55): ("Root", "Solar_Plexus"),
+    (30, 41): ("Root", "G"),
 }
 
 # 閘門到中心的映射（每個閘門屬於哪個中心）
@@ -1034,18 +1023,22 @@ GATE_TO_CENTER = {
 }
 
 
-def get_defined_centers_from_gates(personality_list: List[Dict], design_list: List[Dict]) -> Dict[str, bool]:
-    """根據行星列表中的閘門，計算各能量中心是否被定義（有閘門激活即為定義）"""
-    activated_gates = set()
-    for p in (personality_list or []) + (design_list or []):
-        g = p.get('gate')
-        if g is not None:
-            activated_gates.add(g)
+def get_defined_centers_from_channels(defined_channels: List[Tuple[int, int]]) -> Dict[str, bool]:
+    """
+    依「已定義通道」計算定義中心（標準人類圖規則）。
+    僅當某中心至少參與一條完整通道時，該中心才算定義；單一閘門懸掛不算定義。
+    """
     defined_centers = {c: False for c in CENTERS}
-    for gate in activated_gates:
-        center = GATE_TO_CENTER.get(gate)
-        if center:
-            defined_centers[center] = True
+    channel_to_centers = {}
+    for (g1, g2), (c1, c2) in HUMAN_DESIGN_CHANNELS.items():
+        channel_to_centers[(min(g1, g2), max(g1, g2))] = (c1, c2)
+    for ch in defined_channels or []:
+        key = (min(ch[0], ch[1]), max(ch[0], ch[1]))
+        pair = channel_to_centers.get(key)
+        if pair:
+            c1, c2 = pair
+            defined_centers[c1] = True
+            defined_centers[c2] = True
     return defined_centers
 
 
@@ -1097,7 +1090,8 @@ def _is_throat_connected_to_motor(
         key = (min(g1, g2), max(g1, g2))
         channel_to_centers[key] = (c1, c2)
     throat = "Throat"
-    motors = ("Ego", "Solar_Plexus", "Root")
+    # 喉嚨須經「已定義通道」連到動力中心（含薦骨，用於顯示型生產者）
+    motors = ("Ego", "Solar_Plexus", "Root", "Sacral")
     for ch in defined_channels:
         key = (min(ch[0], ch[1]), max(ch[0], ch[1]))
         if key not in channel_to_centers:
@@ -1221,9 +1215,9 @@ def determine_authority(defined_centers: Dict[str, bool]) -> str:
     if defined_centers.get("Sacral", False):
         return "薦骨權威"
     
-    # 優先級 3: 脾中心權威
+    # 優先級 3: 直覺權威（脾中心）
     if defined_centers.get("Spleen", False):
-        return "脾中心權威"
+        return "直覺權威"
     
     # 優先級 4: 自我權威（Ego/Heart 中心）
     if defined_centers.get("Ego", False):
@@ -1265,8 +1259,8 @@ def compute_human_design_core_attributes(
     人生角色由意識太陽與潛意識太陽的爻線組合。
     回傳：type_name, profile, strategy, decision_mode, authority, not_self_theme。
     """
-    defined_centers = get_defined_centers_from_gates(personality_list, design_list)
     defined_channels = calculate_defined_channels_from_gates(personality_list, design_list)
+    defined_centers = get_defined_centers_from_channels(defined_channels)
     type_name, strategy = determine_type(defined_centers, defined_channels)
     decision_mode = calculate_decision_mode(
         defined_centers, defined_channels=defined_channels

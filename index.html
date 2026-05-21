@@ -1853,7 +1853,7 @@
                         </div>
                     </div>
                     <!-- 隱藏欄位：使用 data 屬性存儲，不參與表單驗證 -->
-                    <input type="hidden" id="timezone" value="Asia/Shanghai">
+                    <input type="hidden" id="timezone" value="Asia/Taipei">
                     <input type="hidden" id="longitude" value="121.5">
                     <input type="hidden" id="latitude" value="25.0">
                     <div class="button-group">
@@ -2890,7 +2890,7 @@
             set('input-date-display', data.input_date ? '日期時間：' + data.input_date : '');
             set('profile-display', data.profile);
             set('type-display', data.type != null ? data.type : data.type_name);
-            set('strategy-display', data.strategy && String(data.strategy).indexOf('先告知') >= 0 ? '等待回應' : data.strategy);
+            set('strategy-display', data.strategy);
             set('decision-mode-display', data.decision_mode);
             set('authority-display', data.authority ? String(data.authority).split('：')[0].trim() : '');
             set('not-self-theme-display', data.not_self_theme);
@@ -4115,7 +4115,7 @@
             document.getElementById('day').value = record.input.day;
             document.getElementById('time').value = record.input.time;
             document.getElementById('name').value = record.input.name || '';
-            document.getElementById('timezone').value = record.input.timezone || 'Asia/Shanghai';
+            document.getElementById('timezone').value = record.input.timezone || 'Asia/Taipei';
             document.getElementById('longitude').value = record.input.longitude;
             document.getElementById('latitude').value = record.input.latitude;
             
@@ -4358,6 +4358,11 @@
             if (regionSelect) {
                 regionSelect.addEventListener('change', function() {
                     const region = this.value;
+                    const tzInput = document.getElementById('timezone');
+                    if (tzInput) {
+                        if (region === 'taiwan') tzInput.value = 'Asia/Taipei';
+                        else if (region === 'china') tzInput.value = 'Asia/Shanghai';
+                    }
                     // 清空縣市和區域選單
                     const countySelect = document.getElementById('county');
                     const districtSelect = document.getElementById('district');
