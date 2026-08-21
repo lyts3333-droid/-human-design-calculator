@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #050816;
+  --foreground: #f5f0e8;
+  --muted: #a8a0b8;
+  --primary: #6f6cff;
+  --secondary: #4ec5ff;
+  --accent: #c7a86f;
+  --accent-light: #e6d3a3;
+  --success: #3ddb9a;
+  --card: rgba(255, 255, 255, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-noto), var(--font-inter), "Microsoft JhengHei",
+    sans-serif;
+  min-height: 100vh;
+}
+
+::selection {
+  background: rgba(111, 108, 255, 0.35);
+  color: #fff;
+}
+
+/* nicer select options on dark */
+option {
+  background: #0d1228;
+  color: #f5f0e8;
+}
+
+details summary::-webkit-details-marker {
+  display: none;
+}

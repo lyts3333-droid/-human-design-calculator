@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, minimum-scale=1.0, maximum-scale=5.0">
-    <title>人類圖計算器 - Web 應用</title>
+    <title>玩轉人生 — LIFE DESIGN LAB | 人類圖與基因天命 Profile</title>
+    <link rel="icon" href="/assets/logo.png" type="image/png">
+    <meta name="description" content="玩轉人生 LIFE DESIGN LAB — 探索你的人類圖與基因天命 Profile">
     <style>
         * {
             margin: 0;
@@ -1764,10 +1766,12 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="/static/theme.css">
 </head>
 <body>
     <!-- 登錄/註冊界面 -->
     <div id="auth-container" class="auth-container">
+        <img src="/assets/logo.png" alt="玩轉人生" class="site-hero-logo" style="width:88px;height:88px;margin-bottom:20px;">
         <h2 id="auth-title">登錄</h2>
         <form id="auth-form" class="auth-form">
             <input type="text" id="auth-username" placeholder="用戶名" required>
@@ -1793,9 +1797,26 @@
 
     <!-- 主應用界面（登錄後顯示） -->
     <div id="main-app" class="container hidden">
-        <div class="header">
-            <h1>🌟 人類圖計算器</h1>
-            <p>Human Design Calculator - Web Application</p>
+        <nav class="site-nav">
+            <div class="site-nav-brand">
+                <img src="/assets/logo.png" alt="玩轉人生" class="site-nav-logo">
+                <div class="site-nav-text">
+                    <h1>玩轉人生</h1>
+                    <p>LIFE DESIGN LAB</p>
+                </div>
+            </div>
+        </nav>
+
+        <section class="site-hero">
+            <img src="/assets/logo.png" alt="玩轉人生 LIFE DESIGN LAB" class="site-hero-logo">
+            <h2>探索你的人類圖與基因天命 Profile</h2>
+            <p>輸入出生資料，取得完整的人類圖分析與基因天命黃金之路圖。點擊每個球體，深入了解 Shadow → Gift → Siddhi 的轉化旅程。</p>
+            <p class="hero-hint">↓ 在下方輸入你的出生資料開始</p>
+        </section>
+
+        <div class="header" aria-hidden="true">
+            <h1>玩轉人生</h1>
+            <p>LIFE DESIGN LAB</p>
         </div>
 
         <div class="content">
@@ -1856,9 +1877,10 @@
                     <input type="hidden" id="timezone" value="Asia/Taipei">
                     <input type="hidden" id="longitude" value="121.5">
                     <input type="hidden" id="latitude" value="25.0">
+                    <p class="form-hint">不確定出生時間？可先輸入 12:00 試算，再比對不同時段的結果。找不到城市時，請選同一時區的鄰近主要城市。</p>
                     <div class="button-group">
                         <button type="submit" class="btn btn-primary" id="calculate-btn">
-                            計算人類圖
+                            生成我的 Profile
                         </button>
                         <button type="button" class="btn btn-secondary" id="reset-btn">
                             重置
@@ -1991,7 +2013,8 @@
                 
                 <!-- 基因天命 (Gene Keys) 黃金之路區塊 -->
                 <div class="section" id="gene-keys-section" style="display: none; margin-top: 30px;">
-                    <h2>基因天命 (Gene Keys) - 黃金之路</h2>
+                    <h2>基因天命 (Gene Keys) — 黃金之路</h2>
+                    <p class="profile-preview-hint">你的 Profile 預覽：點擊每個球體開啟詳情，探索陰影、天賦與神聖才能。上方保留完整人類圖資料與行星閘門。</p>
                     
                     <!-- 過濾按鈕 -->
                     <div class="filter-buttons" style="display: flex; gap: 10px; margin: 20px 0; flex-wrap: wrap; justify-content: center;">
@@ -2015,6 +2038,28 @@
                 </div>
                 
             </div>
+
+            <section class="site-faq">
+                <h2>常見問題</h2>
+                <details class="faq-item">
+                    <summary>不知道確切出生時間怎麼辦？</summary>
+                    <p>可先輸入 12:00  noon 試算；若大致知道時段（上午、下午、夜間），可各試一次比對差異。月亮與上升相關資訊對時間較敏感，太陽閘門通常較穩定。</p>
+                </details>
+                <details class="faq-item">
+                    <summary>找不到我的出生城市？</summary>
+                    <p>請選同一時區內最接近的主要城市。只要時區正確，人類圖與基因天命的核心計算即具參考價值。</p>
+                </details>
+                <details class="faq-item">
+                    <summary>會保留哪些資料？</summary>
+                    <p>所有分析結果（人類圖類型、人生角色、行星閘門、基因天命圖）皆在頁面完整顯示。若已登入或使用本機模式，歷史記錄會保存你的輸入與結果以便日後查閱。</p>
+                </details>
+            </section>
+
+            <footer class="site-footer">
+                <div class="footer-brand">玩轉人生</div>
+                <div class="footer-sub">LIFE DESIGN LAB</div>
+                <p style="margin-top:12px;opacity:0.7;">人類圖 × 基因天命 · 探索你的獨特設計</p>
+            </footer>
         </div>
     </div>
 
@@ -4347,7 +4392,7 @@
             } finally {
                 // 恢復按鈕狀態
                 calculateBtn.disabled = false;
-                calculateBtn.textContent = '計算人類圖';
+                calculateBtn.textContent = '生成我的 Profile';
             }
         });
 

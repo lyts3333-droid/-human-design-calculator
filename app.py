@@ -118,9 +118,17 @@ if not DB_DISABLED:
     def load_user(user_id):
         return User.query.get(int(user_id))
 
+    from appointment_booking import (
+        init_appointment_slots_if_empty,
+        register_appointment_models,
+    )
+
+    register_appointment_models(db)
+
     def init_db():
         with app.app_context():
             db.create_all()
+            init_appointment_slots_if_empty()
             print("[INFO] Database initialized")
 
     init_db()
@@ -156,20 +164,20 @@ if os.path.exists(ephe_path):
         
         if ephe_files_exist and retflag >= 0:
             ephemeris_loaded = True
-            print(f"[INFO] ✓ Swiss Ephemeris 星曆檔案已成功加載")
+            print(f"[INFO] Swiss Ephemeris 星曆檔案已成功加載")
             print(f"[INFO]   路徑: {os.path.abspath(ephe_path)}")
             print(f"[INFO]   驗證文件: {', '.join(ephe_files)} 已找到")
             print(f"[INFO]   測試計算: 成功（使用精密星曆檔案）")
         else:
             missing_files = [f for f in ephe_files if not os.path.exists(os.path.join(ephe_path, f))]
             if missing_files:
-                print(f"[WARNING] ⚠ 部分星曆檔案缺失: {', '.join(missing_files)}")
+                print(f"[WARNING] 部分星曆檔案缺失: {', '.join(missing_files)}")
                 print(f"[WARNING]   將使用 Moshier 模式（精度較低，不建議用於生產環境）")
     except Exception as e:
-        print(f"[ERROR] ✗ 加載星曆檔案時發生錯誤: {e}")
+        print(f"[ERROR] 加載星曆檔案時發生錯誤: {e}")
         print(f"[WARNING]   將使用 Moshier 模式（精度較低，不建議用於生產環境）")
 else:
-    print(f"[WARNING] ⚠ 星曆檔案路徑不存在: {os.path.abspath(ephe_path)}")
+    print(f"[WARNING] 星曆檔案路徑不存在: {os.path.abspath(ephe_path)}")
     print(f"[WARNING]   將使用 Moshier 模式（精度較低，不建議用於生產環境）")
 
 if not ephemeris_loaded:
@@ -1368,6 +1376,18 @@ def index():
     return send_from_directory('.', 'index.html')
 
 
+@app.route('/assets/<path:filename>')
+def assets_files(filename):
+    """提供品牌圖片等靜態資源"""
+    return send_from_directory('assets', filename)
+
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """提供自訂樣式與前端靜態檔案"""
+    return send_from_directory('static', filename)
+
+
 @app.route('/gene_keys.csv')
 def gene_keys_csv():
     """提供基因天命 CSV 文件"""
@@ -1424,7 +1444,7 @@ def load_gene_keys_data():
                     continue
         
         _gene_keys_cache = gene_keys_dict
-        print(f"[INFO] ✓ 基因天命數據已載入，共 {len(gene_keys_dict)} 個閘門")
+        print(f"[INFO] 基因天命數據已載入，共 {len(gene_keys_dict)} 個閘門")
         return gene_keys_dict
         
     except Exception as e:
@@ -1588,7 +1608,8 @@ _LINE_HELP_TEXT = (
     "請輸入「西元生日 + 空白 + 出生時間」，例如：\n"
     "1990-09-21 12:00\n"
     "或 1990/9/21 12:00\n"
-    "（24 小時制，需含時與分）"
+    "（24 小時制，需含時與分）\n\n"
+    "輸入「立即預約」可查看並預約諮詢時段。"
 )
 
 
@@ -1686,16 +1707,19 @@ def _line_api_headers() -> Dict[str, str]:
 
 
 def _line_api_reply(reply_token: str, text: str) -> bool:
-    if not reply_token:
+    return _line_api_reply_messages(
+        reply_token, [{"type": "text", "text": (text or "")[:5000]}]
+    )
+
+
+def _line_api_reply_messages(reply_token: str, messages: List[Dict[str, Any]]) -> bool:
+    if not reply_token or not messages:
         return False
     try:
         r = requests.post(
             "https://api.line.me/v2/bot/message/reply",
             headers=_line_api_headers(),
-            json={
-                "replyToken": reply_token,
-                "messages": [{"type": "text", "text": (text or "")[:5000]}],
-            },
+            json={"replyToken": reply_token, "messages": messages[:5]},
             timeout=15,
         )
         if r.status_code != 200:
@@ -1734,6 +1758,16 @@ def _process_line_user_text(reply_token: str, user_id: Optional[str], raw: str) 
     try:
         if raw.lower() in ("help", "說明", "幫助", "?"):
             _line_api_reply(reply_token, _LINE_HELP_TEXT)
+            return
+
+        if raw.strip() == "立即預約":
+            from appointment_booking import handle_booking_list_request
+
+            handle_booking_list_request(
+                reply_token,
+                _line_api_reply,
+                _line_api_reply_messages,
+            )
             return
 
         parsed = _normalize_line_birth_input(raw)
@@ -1788,13 +1822,29 @@ def _handle_line_webhook_post(body_bytes: bytes) -> Optional[str]:
     events = data.get("events") or []
     print(f"[LINE] webhook 收到 {len(events)} 個事件")
     for ev in events:
-        if ev.get("type") != "message":
+        ev_type = ev.get("type")
+        reply_token = ev.get("replyToken") or ""
+        user_id = (ev.get("source") or {}).get("userId")
+
+        if ev_type == "postback":
+            postback = ev.get("postback") or {}
+            data_str = (postback.get("data") or "").strip()
+            print(f"[LINE] postback user={user_id} data={data_str[:80]!r}")
+            from appointment_booking import handle_booking_postback
+
+            handle_booking_postback(
+                reply_token,
+                user_id,
+                data_str,
+                _line_api_reply,
+            )
+            continue
+
+        if ev_type != "message":
             continue
         msg = ev.get("message") or {}
         if msg.get("type") != "text":
             continue
-        reply_token = ev.get("replyToken") or ""
-        user_id = (ev.get("source") or {}).get("userId")
         text = (msg.get("text") or "").strip()
         print(f"[LINE] 文字訊息 user={user_id} text={text[:40]!r}")
         _process_line_user_text(reply_token, user_id, text)
