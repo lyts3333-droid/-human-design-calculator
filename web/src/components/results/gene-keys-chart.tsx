@@ -172,7 +172,9 @@ export function GeneKeysChart({
                   e.stopPropagation();
                   openPath(c.pathId);
                 }}
-                onMouseEnter={() => visible && c.pathId && setHoverPathId(c.pathId)}
+                onMouseEnter={() => {
+                  if (visible && c.pathId) setHoverPathId(c.pathId);
+                }}
                 onMouseLeave={() => setHoverPathId(null)}
               >
                 <line
@@ -221,9 +223,13 @@ export function GeneKeysChart({
                 }}
                 onClick={() => {
                   setPathDetail(null);
-                  visible && openDetail(node.gate, `${node.label} · ${node.value}`);
+                  if (visible) {
+                    void openDetail(node.gate, `${node.label} · ${node.value}`);
+                  }
                 }}
-                onMouseEnter={() => visible && setHoverId(node.id)}
+                onMouseEnter={() => {
+                  if (visible) setHoverId(node.id);
+                }}
                 onMouseLeave={() => setHoverId(null)}
                 transform={`translate(${pos.x} ${pos.y}) scale(${hovered ? 1.1 : 1}) translate(${-pos.x} ${-pos.y})`}
               >
