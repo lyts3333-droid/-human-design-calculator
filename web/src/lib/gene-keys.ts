@@ -23,6 +23,8 @@ export type GeneKeyConnection = {
   to: string;
   color: "green" | "red" | "blue";
   sequence: SequenceFilter;
+  /** 黃金之路路徑 ID，對應 gene-key-paths.ts */
+  pathId?: string;
 };
 
 /**
@@ -216,28 +218,26 @@ export function buildGeneKeyNodes(
 
 /** 連線依 NODE_POSITIONS 自動取端點，勿寫死像素 */
 export const GENE_KEY_CONNECTIONS: GeneKeyConnection[] = [
-  // 藍色：上三角 + 珍珠連至三頂點
-  { from: "personality-sun", to: "design-mars", color: "blue", sequence: "prosperity" },
-  { from: "personality-sun", to: "design-jupiter", color: "blue", sequence: "prosperity" },
-  { from: "design-mars", to: "design-jupiter", color: "blue", sequence: "prosperity" },
-  { from: "personality-jupiter", to: "personality-sun", color: "blue", sequence: "prosperity" },
-  { from: "personality-jupiter", to: "design-mars", color: "blue", sequence: "prosperity" },
-  { from: "personality-jupiter", to: "design-jupiter", color: "blue", sequence: "prosperity" },
+  // 藍色：珍珠序列
+  { from: "personality-sun", to: "design-mars", color: "blue", sequence: "prosperity", pathId: "initiative" },
+  { from: "personality-sun", to: "design-jupiter", color: "blue", sequence: "prosperity", pathId: "initiative" },
+  { from: "design-mars", to: "design-jupiter", color: "blue", sequence: "prosperity", pathId: "growth" },
+  { from: "personality-jupiter", to: "personality-sun", color: "blue", sequence: "prosperity", pathId: "service" },
+  { from: "personality-jupiter", to: "design-mars", color: "blue", sequence: "prosperity", pathId: "service" },
+  { from: "personality-jupiter", to: "design-jupiter", color: "blue", sequence: "prosperity", pathId: "service" },
 
-  // 綠色：外框菱形
-  { from: "personality-sun", to: "personality-earth", color: "green", sequence: "genius" },
-  { from: "design-sun", to: "design-earth", color: "green", sequence: "genius" },
+  // 綠色：啟動序列
+  { from: "personality-sun", to: "personality-earth", color: "green", sequence: "genius", pathId: "challenge" },
+  { from: "design-sun", to: "design-earth", color: "green", sequence: "genius", pathId: "core-stability" },
+  { from: "design-sun", to: "design-venus", color: "green", sequence: "genius", pathId: "breakthrough" },
+  { from: "design-venus", to: "personality-earth", color: "green", sequence: "genius", pathId: "breakthrough" },
 
-  // 橫向：光芒 — SQ — 進化
-  { from: "design-sun", to: "design-venus", color: "green", sequence: "genius" },
-  { from: "design-venus", to: "personality-earth", color: "green", sequence: "genius" },
-
-  // 紅色：中段與下方（已移除：紅金星↔黑金星、黑火星↔紅月亮、黑地球↔紅地球）
-  { from: "design-mars", to: "design-venus", color: "red", sequence: "love" },
-  { from: "design-venus", to: "personality-mars", color: "red", sequence: "love" },
-  { from: "personality-venus", to: "personality-mars", color: "red", sequence: "love" },
-  { from: "personality-venus", to: "design-moon", color: "red", sequence: "love" },
-  { from: "design-moon", to: "design-earth", color: "red", sequence: "love" },
+  // 紅色：金星序列
+  { from: "design-mars", to: "design-venus", color: "red", sequence: "love", pathId: "realisation" },
+  { from: "design-venus", to: "personality-mars", color: "red", sequence: "love", pathId: "love" },
+  { from: "personality-venus", to: "personality-mars", color: "red", sequence: "love", pathId: "intelligence" },
+  { from: "personality-venus", to: "design-moon", color: "red", sequence: "love", pathId: "karma" },
+  { from: "design-moon", to: "design-earth", color: "red", sequence: "love", pathId: "dharma" },
 ];
 
 export function getNodePosition(id: string): { x: number; y: number } | undefined {

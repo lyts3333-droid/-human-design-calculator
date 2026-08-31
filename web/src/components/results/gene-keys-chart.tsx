@@ -15,6 +15,7 @@ import {
   type SequenceFilter,
   type SphereColor,
 } from "@/lib/gene-keys";
+import { getGeneKeyPath, type GeneKeyPathInfo } from "@/data/gene-key-paths";
 import type { GeneKeyDetail, PlanetInfo } from "@/types/hd";
 import { IChingWheel } from "@/components/results/iching-wheel";
 import { cn } from "@/lib/utils";
@@ -56,6 +57,8 @@ export function GeneKeysChart({
   const [loadingGate, setLoadingGate] = useState<number | null>(null);
   const [title, setTitle] = useState("基因天命");
   const [hoverId, setHoverId] = useState<string | null>(null);
+  const [hoverPathId, setHoverPathId] = useState<string | null>(null);
+  const [pathDetail, setPathDetail] = useState<GeneKeyPathInfo | null>(null);
 
   const nodes = useMemo(
     () => buildGeneKeyNodes(personalityList, designList),
@@ -97,6 +100,13 @@ export function GeneKeysChart({
     }
   };
 
+  const openPath = (pathId: string | undefined) => {
+    const path = getGeneKeyPath(pathId);
+    if (!path) return;
+    setPathDetail(path);
+    setDetail(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -104,7 +114,7 @@ export function GeneKeysChart({
           基因天命 · 黃金之路
         </h3>
         <p className="mt-2 text-sm text-muted">
-          點擊每個球體，深入了解陰影、天賦與神聖才能。
+          點擊球體或連線，深入了解陰影、天賦、神聖才能與黃金之路。
         </p>
       </div>
 
@@ -144,17 +154,49 @@ export function GeneKeysChart({
             const to = positions[c.to];
             if (!from || !to) return null;
             const visible = filter === "all" || filter === c.sequence;
+            const pathInfo = getGeneKeyPath(c.pathId);
+            const isHovered = hoverPathId === c.pathId && visible && Boolean(c.pathId);
+            const strokeW = isZoomed && visible ? 5 : 4;
+            const hitW = isHovered ? 28 : 22;
+
             return (
-              <line
+              <g
                 key={`${c.from}-${c.to}-${idx}`}
-                x1={from.x}
-                y1={from.y}
-                x2={to.x}
-                y2={to.y}
-                stroke={CONNECTION_STROKE[c.color]}
-                strokeWidth={isZoomed && visible ? 5 : 4}
-                strokeOpacity={visible ? 0.55 : 0.08}
-              />
+                opacity={visible ? 1 : 0.08}
+                style={{
+                  cursor: visible && c.pathId ? "pointer" : "default",
+                  pointerEvents: visible && c.pathId ? "auto" : "none",
+                }}
+                onClick={(e) => {
+                  if (!visible || !c.pathId) return;
+                  e.stopPropagation();
+                  openPath(c.pathId);
+                }}
+                onMouseEnter={() => visible && c.pathId && setHoverPathId(c.pathId)}
+                onMouseLeave={() => setHoverPathId(null)}
+              >
+                <line
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  stroke="transparent"
+                  strokeWidth={hitW}
+                />
+                <line
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                  stroke={CONNECTION_STROKE[c.color]}
+                  strokeWidth={isHovered ? strokeW + 2 : strokeW}
+                  strokeOpacity={isHovered ? 0.95 : 0.55}
+                  style={{ transition: "stroke-width 0.2s, stroke-opacity 0.2s" }}
+                />
+                {isHovered && pathInfo && (
+                  <title>{pathInfo.title}</title>
+                )}
+              </g>
             );
           })}
 
@@ -177,9 +219,10 @@ export function GeneKeysChart({
                   cursor: visible ? "pointer" : "default",
                   pointerEvents: visible ? "auto" : "none",
                 }}
-                onClick={() =>
-                  visible && openDetail(node.gate, `${node.label} · ${node.value}`)
-                }
+                onClick={() => {
+                  setPathDetail(null);
+                  visible && openDetail(node.gate, `${node.label} · ${node.value}`);
+                }}
                 onMouseEnter={() => visible && setHoverId(node.id)}
                 onMouseLeave={() => setHoverId(null)}
                 transform={`translate(${pos.x} ${pos.y}) scale(${hovered ? 1.1 : 1}) translate(${-pos.x} ${-pos.y})`}
@@ -234,6 +277,51 @@ export function GeneKeysChart({
       </div>
 
       <AnimatePresence>
+        {pathDetail && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setPathDetail(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.96 }}
+              className="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/15 bg-[#0d1228]/95 shadow-[0_30px_80px_rgba(0,0,0,0.55)]"
+            >
+              <div className="flex items-start justify-between border-b border-white/10 px-6 py-5">
+                <div>
+                  <div className="text-xs tracking-[0.2em] text-muted">{pathDetail.subtitle}</div>
+                  <h4 className="mt-1 text-xl font-semibold text-accent-light">
+                    {pathDetail.title}
+                  </h4>
+                  <p className="mt-2 text-sm italic leading-relaxed text-[#9fd4a8]">
+                    {pathDetail.tagline}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setPathDetail(null)}
+                  className="rounded-full border border-white/10 p-2 text-muted hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="border-b border-white/10 px-6 py-3 text-xs text-muted">
+                連結：{pathDetail.fromLabel} → {pathDetail.toLabel}
+              </div>
+              <div className="space-y-4 overflow-y-auto px-6 py-5 text-sm leading-7 text-[#EDE8F8]">
+                {pathDetail.paragraphs.map((paragraph) => (
+                  <p key={paragraph.slice(0, 24)}>{paragraph}</p>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
         {detail && (
           <motion.div
             className="fixed inset-0 z-[100] flex items-center justify-center p-4"
