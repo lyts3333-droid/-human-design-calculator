@@ -1599,9 +1599,10 @@ def run_birth_chart_calculation(
     return payload, None
 
 
-# LINE 生日輸入：1990-09-21 12:00、1990/9/21 12:00、全形空白等
+# LINE 生日輸入：1990-09-21 12:00、1990/9/21 12:00、1990.9.21 12:00、全形空白等
+LINE_DATE_HINT_PATTERN = re.compile(r"\d{4}[-/.]\d{1,2}[-/.]\d{1,2}")
 LINE_BIRTH_INPUT_PATTERN = re.compile(
-    r"^\s*(\d{4})[-/](\d{1,2})[-/](\d{1,2})\s+(\d{1,2}):(\d{2})\s*$"
+    r"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\s+(\d{1,2}):(\d{2})"
 )
 
 _LINE_HELP_TEXT = (
@@ -1609,16 +1610,35 @@ _LINE_HELP_TEXT = (
     "1990-09-21 12:00\n"
     "或 1990/9/21 12:00\n"
     "（24 小時制，需含時與分）\n\n"
-    "輸入「立即預約」可查看並預約諮詢時段。"
+    "輸入「立即預約」或「預約」可查看並預約諮詢時段。\n"
+    "輸入「算圖」可查看輸入說明。"
 )
+
+_LINE_HELP_COMMANDS = ("help", "說明", "幫助", "?", "算圖")
+_LINE_BOOKING_COMMANDS = ("立即預約", "預約")
+
+
+def _line_command_kind(raw: str) -> Optional[str]:
+    """回傳 help / booking；非系統指令則為 None。支援關鍵字前綴。"""
+    text = (raw or "").strip()
+    if not text:
+        return None
+    lower = text.lower()
+    for cmd in _LINE_HELP_COMMANDS:
+        if lower == cmd.lower() or text.startswith(cmd):
+            return "help"
+    for cmd in _LINE_BOOKING_COMMANDS:
+        if text == cmd or text.startswith(cmd):
+            return "booking"
+    return None
 
 
 def _normalize_line_birth_input(raw: str) -> Optional[Tuple[str, str]]:
-    """解析 LINE 文字為 (birth_date YYYY-MM-DD, birth_time HH:MM)。"""
+    """從 LINE 文字中擷取 (birth_date YYYY-MM-DD, birth_time HH:MM)。"""
     if not raw:
         return None
     text = raw.strip().replace("\u3000", " ").replace("\t", " ")
-    m = LINE_BIRTH_INPUT_PATTERN.match(text)
+    m = LINE_BIRTH_INPUT_PATTERN.search(text)
     if not m:
         return None
     y, mo, d, h, mi = m.groups()
@@ -1754,13 +1774,22 @@ def _line_api_push(user_id: str, text: str) -> bool:
 
 
 def _process_line_user_text(reply_token: str, user_id: Optional[str], raw: str) -> None:
-    """處理使用者文字（直接呼叫 LINE Messaging API，不依賴 SDK 回覆）。"""
-    try:
-        if raw.lower() in ("help", "說明", "幫助", "?"):
-            _line_api_reply(reply_token, _LINE_HELP_TEXT)
-            return
+    """處理使用者文字（直接呼叫 LINE Messaging API，不依賴 SDK 回覆）。
 
-        if raw.strip() == "立即預約":
+    只有日期特徵或系統指令才回覆；一般閒聊直接 return，不發送任何訊息。
+    """
+    text = (raw or "").strip()
+    if not text:
+        return
+
+    cmd = _line_command_kind(text)
+    has_date = bool(LINE_DATE_HINT_PATTERN.search(text))
+    if not cmd and not has_date:
+        print(f"[LINE] 閒聊忽略 text={text[:40]!r}")
+        return
+
+    try:
+        if cmd == "booking" and not has_date:
             from appointment_booking import handle_booking_list_request
 
             handle_booking_list_request(
@@ -1770,37 +1799,46 @@ def _process_line_user_text(reply_token: str, user_id: Optional[str], raw: str) 
             )
             return
 
-        parsed = _normalize_line_birth_input(raw)
-        if not parsed:
-            _line_api_reply(reply_token, f"格式不正確。\n\n{_LINE_HELP_TEXT}")
+        if has_date:
+            parsed = _normalize_line_birth_input(text)
+            if not parsed:
+                _line_api_reply(reply_token, f"格式不正確。\n\n{_LINE_HELP_TEXT}")
+                return
+
+            birth_date, birth_time = parsed
+            _line_api_reply(reply_token, "收到！正在計算中，請稍候…")
+
+            tz = os.environ.get("LINE_DEFAULT_TIMEZONE") or os.environ.get("DEFAULT_TIMEZONE")
+            payload, err = run_birth_chart_calculation(
+                birth_date,
+                birth_time,
+                timezone_str=tz,
+                longitude=0.0,
+                latitude=0.0,
+            )
+            if err:
+                out = f"計算時發生問題：{err}\n\n{_LINE_HELP_TEXT}"
+            else:
+                out = _format_birth_result_for_line(payload)
+
+            if user_id:
+                if not _line_api_push(user_id, out):
+                    print("[ERROR] 無法 push 計算結果，請檢查 CHANNEL_ACCESS_TOKEN")
+            else:
+                print("[ERROR] 無 user_id，無法推送計算結果")
             return
 
-        birth_date, birth_time = parsed
-        _line_api_reply(reply_token, "收到！正在計算中，請稍候…")
-
-        tz = os.environ.get("LINE_DEFAULT_TIMEZONE") or os.environ.get("DEFAULT_TIMEZONE")
-        payload, err = run_birth_chart_calculation(
-            birth_date,
-            birth_time,
-            timezone_str=tz,
-            longitude=0.0,
-            latitude=0.0,
-        )
-        if err:
-            out = f"計算時發生問題：{err}\n\n{_LINE_HELP_TEXT}"
-        else:
-            out = _format_birth_result_for_line(payload)
-
-        if user_id:
-            if not _line_api_push(user_id, out):
-                print("[ERROR] 無法 push 計算結果，請檢查 CHANNEL_ACCESS_TOKEN")
-        else:
-            print("[ERROR] 無 user_id，無法推送計算結果")
+        if cmd == "help":
+            _line_api_reply(reply_token, _LINE_HELP_TEXT)
+            return
     except Exception as e:
         print(f"[ERROR] LINE 處理訊息失敗: {e}")
         import traceback
         traceback.print_exc()
-        _line_api_reply(reply_token, "系統暫時無法處理，請稍後再試。\n\n" + _LINE_HELP_TEXT)
+        try:
+            _line_api_reply(reply_token, "系統暫時無法處理，請稍後再試。\n\n" + _LINE_HELP_TEXT)
+        except Exception as reply_err:
+            print(f"[ERROR] LINE 錯誤回覆也失敗: {reply_err}")
 
 
 def _handle_line_webhook_post(body_bytes: bytes) -> Optional[str]:
